@@ -1,0 +1,22 @@
+# ATLAS execution instructions
+
+Read `docs/PROGRESS.md`, `docs/TASKS.md`, `docs/ARCHITECTURE.md` and the latest entry in `docs/SESSION_LOG.md` before substantial work. The authoritative handoff is `docs/plans/2026-10-16-atlas-implementation-plan.md` (Revision 2); the preserved source brief is historical where superseded.
+
+- Existing connected agents perform inference through MCP. Never add a model SDK, AI API key, embeddings, billing ledger, or automatic agent launcher.
+- Use this Windows project root. Keep contracts browser-safe; web must never import core, SQL, or server credentials.
+- Local implementation is authorized. Dedicated Neon provisioning, live migrations, actual client configuration, public exposure, startup installation, commits and pushes remain separate gates. Never touch Tech-Trends or Sinta Wedding.
+- Owner request 2026-10-17 authorizes Neon PostgreSQL/Auth setup and scoped app wiring/verification on org-floral-darkness-38230607 / project misty-fire-28366774 / branch production. That exact target supersedes the earlier planned new-project/atlas-dev target for N01. No AI Gateway/storage/MCP client/public deployment/startup/commit/push authorization is implied.
+- Follow-up request 2026-10-17 (N02) explicitly authorizes completing Neon setup: domain migrations/restricted roles and private atlas-sources storage on that same production target, with an expiring child-branch migration rehearsal first. Actual personal owner selection, MCP registration, public hosting and AI Gateway remain outside N02. Do not promote a synthetic Auth identity as the personal owner.
+- Follow-up A01 (2026-10-17) authorizes the agent-first project/checkpoint vertical slice, scoped Codex credential provisioning, additive global Codex instructions and MCP registration on this PC. Apply new migrations to the same authorized Neon target after rehearsal. Automatic project registration and project-scoped checkpoint saving require no per-note owner approval. Checkpoints retain agent provenance and are not verified canonical memories. This priority supersedes the original milestone order for A01 only.
+- Use pnpm, exact pinned dependencies, strict TypeScript, PostgreSQL 18 and loopback servers. Run checks appropriate to each milestone; distinguish local fixtures from real integrations.
+- Preserve originals, source versions, permissions, review and evidence. Agent suggestions are never silently verified facts.
+- Mark each substantial task In Progress before editing, record actual checks/failures/limitations, and only mark Completed with evidence. Preserve the source-brief hash.
+- Planned order: S01–S14, S21, S15–S20, S22–S30. Follow the dependencies and checkpoints in the handoff.
+- Never bypass RLS, widen grants, fabricate data, or weaken checks to make tests pass.
+- Secrets belong only in ignored local files/configured credentials. Do not print credentials or database connection strings.
+- Future n8n work also follows the automation workspace instructions supplied by the owner; no live n8n work is part of P0.
+- A01 workflow: follow `docs/CODEX_GLOBAL_INSTRUCTIONS.md` for automatic project context and checkpoints. Use the scoped launcher fallback when this chat has no ATLAS tool inventory. Preserve review/evidence boundaries; checkpoints are agent-recorded knowledge, not silently verified memories.
+- L01 (2026-10-17) supersedes the cloud knowledge design: the owner wants one local Obsidian-style folder, directly accessible to agents. Make local Markdown the source of truth, migrate existing owned knowledge without deleting cloud history, stop runtime cloud knowledge writes, and implement a real basic graph from actual files/links. Update the installed Codex workflow accordingly. No cloud resource deletion or public exposure is authorized.
+- K01 (2026-10-17) approved implementation: follow docs/KNOWLEDGE_CAPTURE_POLICY.md and the knowledge-quality plan. Capture durable owner/project subjects with evidence, applicability and explicit replacement; keep routine logs in project reports. Default context is knowledge, legacy notes are activity. Preserve original files and the G01/G02 graph. No separate AI API or cloud knowledge writes.
+
+Use `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm build`, `pnpm test:unit`. Local database checks use only `atlas_test` on loopback with `DATABASE_TARGET_ID=local:atlas-tests:atlas_test`. No tests may fall back to a cloud URL.

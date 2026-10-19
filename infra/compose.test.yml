@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:18-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c
+    environment:
+      POSTGRES_USER: atlas_test_admin
+      POSTGRES_DB: atlas_test
+      POSTGRES_PASSWORD: ${ATLAS_TEST_ADMIN_PASSWORD:?Run pnpm db:test:prepare}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - atlas-test-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atlas_test_admin -d atlas_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: "no"
+volumes:
+  atlas-test-data:

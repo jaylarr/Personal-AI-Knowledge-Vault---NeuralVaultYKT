@@ -1,0 +1,113 @@
+[
+  {
+    "key": "family-1",
+    "name": "Personal",
+    "children": ["Personal knowledge", "Goals", "Preferences", "General notes", "Personal research"]
+  },
+  {
+    "key": "family-2",
+    "name": "AI & Technology Research",
+    "children": [
+      "AI models",
+      "LLM research",
+      "Context engineering",
+      "Agent architectures",
+      "RAG and GraphRAG",
+      "AI memory systems",
+      "AI tools and platforms",
+      "Technical discoveries"
+    ]
+  },
+  {
+    "key": "family-3",
+    "name": "Automation",
+    "children": [
+      "n8n",
+      "Make",
+      "Zapier",
+      "API integrations",
+      "Webhooks",
+      "CRM automation",
+      "Business workflows",
+      "Automation techniques"
+    ]
+  },
+  {
+    "key": "family-4",
+    "name": "Automation Projects",
+    "children": [
+      "Active automation projects",
+      "Completed automations",
+      "Client workflows",
+      "Experiments",
+      "Reusable workflow patterns",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "key": "family-5",
+    "name": "Application Projects",
+    "children": [
+      "Desktop applications",
+      "Backend systems",
+      "Internal tools",
+      "Database systems",
+      "Application architecture",
+      "Project-specific documentation"
+    ]
+  },
+  {
+    "key": "family-6",
+    "name": "Web Application Projects",
+    "children": [
+      "React applications",
+      "Full-stack applications",
+      "Client websites",
+      "Portfolio projects",
+      "Frontend architecture",
+      "Backend integrations"
+    ]
+  },
+  {
+    "key": "family-7",
+    "name": "UI / UX Knowledge",
+    "children": [
+      "Design principles",
+      "Typography",
+      "Layout systems",
+      "Animation and motion",
+      "Responsive design",
+      "UI components",
+      "Accessibility",
+      "Design references",
+      "Personal UI guidelines"
+    ]
+  },
+  {
+    "key": "family-8",
+    "name": "Development Playbook",
+    "children": [
+      "Development lifecycle",
+      "Planning strategies",
+      "Coding conventions",
+      "Debugging procedures",
+      "Testing strategies",
+      "Database design rules",
+      "Security practices",
+      "Deployment procedures",
+      "Reusable implementation instructions"
+    ]
+  },
+  {
+    "key": "family-9",
+    "name": "Research Library",
+    "children": [
+      "Saved articles",
+      "Documentation",
+      "Tutorials",
+      "Comparisons",
+      "Technical references",
+      "Ideas requiring further investigation"
+    ]
+  }
+]

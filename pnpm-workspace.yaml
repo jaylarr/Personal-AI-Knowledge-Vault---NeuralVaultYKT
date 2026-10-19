@@ -1,0 +1,15 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  core-js: false
+  esbuild: true
+minimumReleaseAgeExclude:
+  - lucide-react@1.58.0
+  - '@neon/config@1.9.2'
+  - '@neon/env@1.6.3'
+  - '@neon/sdk@7.3.0'
+overrides:
+  '@better-auth/api-key': 1.7.6
+  '@better-auth/core': 1.7.6
+  '@better-auth/api-key>better-call': 1.4.0

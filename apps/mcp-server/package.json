@@ -1,0 +1,16 @@
+{
+  "name": "@atlas/mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.js"
+    }
+  },
+  "dependencies": {
+    "@atlas/contracts": "workspace:*",
+    "@modelcontextprotocol/server": "2.3.1"
+  }
+}

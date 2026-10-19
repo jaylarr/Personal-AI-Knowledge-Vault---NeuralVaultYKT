@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.local/
+Vault/
+.artifacts/
+coverage/
+playwright-report/
+test-results/
+.neon
+*.tsbuildinfo

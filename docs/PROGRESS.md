@@ -1,0 +1,31 @@
+# Progress
+
+2026-10-18: R01 Completed. Local source/domain, review, scoped agents/tasks,18-tool MCP, retrieval, owner workspace, graph and recovery implementation is connected. Verified163 units,23 local/security cases,2 MCP/process scenarios,13 owner UI cases and19 graph functional cases; the2 affected source/evidence UI flows and17 domain cases passed again after final corrections. Timed retrieval at100/1000/5000 sources matched and ranked first50/50 per corpus, with warm p95 454/619/422ms; source5001 admission was rejected atomically. Two isolated graph profiles passed, with500-node DPR1 orbit60.3FPS and DPR2 High30.7FPS. The installed protected launcher verified18 tools and fresh K01 context; a real77-file private backup was verified and restored separately. All51 original Markdown hashes and the brief hash remain unchanged. Actual source controls, preserved reader and rendered WebGL graph were inspected; expanded selection/provenance/Open file work at the narrow pane. Actual fresh-chat domain acceptance remains unobserved. R22/R23 retain those unaccepted actual-client gates. See LOCAL_COMPLETION_REPORT.md and LOCAL_RELEASE_CHECKLIST.md; earlier entries below are historical.
+
+Last updated: 2026-10-18 (Asia/Taipei).
+
+- G03 In Progress — actual WebGL neural graph replaces the G01/G02 SVG renderer. Shader points/curves, real-link propagation/zaps, compact responsive controls, data/provenance and local reader verified. Final performance/picking/resource acceptance running; see NEURAL_GRAPH_PROGRESS.md.
+
+- Graph follow-up: G02 Completed — fixed continuous drag/orbit scheduling and native node dragging, stabilized framing, added wheel zoom and expanded navigation.116 unit/9 browser checks passed; actual desktop and300×565 pane interactions verified. See GRAPH_NAVIGATION_FIX_REPORT.md. The independently tracked K01 task below retains its own status.
+
+- Phase: local Markdown knowledge workflow.
+- Milestone: L01 Completed — one local folder, automatic agent capture/context, real file/link graph, direct edits/search/refresh and local history. Actual preview and fresh MCP-process retrieval verified.
+- Current task: K01 Completed — durable keyed owner/project knowledge, immutable corrections, summary/full context and activity separation. Seven subjects saved/reused;15 original files unchanged;131 automated cases pass, build/strict checks and installed fresh-MCP round trip pass. Global guidance updated additively. See KNOWLEDGE_QUALITY_REPORT.md.
+- Completed: S01–S04 local scaffold. Typed pnpm workspace, setup-aware web shell, loopback Hono API, redacted configuration, guarded migration runner and same-client transaction wrapper.
+- S05 completed: 39 local domain tables, composite workspace FKs, immutable provenance, cycle/checksum/span/task constraints, lexical indexes, setup-only workspace service and 72 seed collections. See SCHEMA.md.
+- Database: official PostgreSQL 18.6; isolated atlas-tests project/atlas_test database; API/worker are actual non-owner roles. Migrations 0012–0015 add owner/agent/worker policies, evidence intersection, restricted task batches and fenced leases. See AUTHORIZATION.md. Historical C0/N01 browser evidence is retained in TEST_REPORT.md.
+- Current L01 checks:93 unit +2 local browser +6 historical compatibility browser =101 distinct cases passed. npm run build/strict types/lint/format/bundle pass. Actual installed local MCP creates exact Markdown, deduplicates and retrieves through a fresh process. Graph/direct edits/mobile/no-external-browser-requests checks passed. Historical SQL/Auth evidence is not relabeled as rerun. See LOCAL_VAULT_REPORT.md.
+- Blockers: no unresolved local foundation defect. Sandbox registry/Docker/pnpm-store access needs permitted execution, which succeeded.
+- Historical Neon target: ATLAS - Personal / misty-fire-28366774 / production. Existing data/resources remain preserved; normal local vault runtime does not use them. No new cloud knowledge writes/sync. Global Codex MCP atlas now uses the local file API and existing protected transport credential in memory.
+- N02 follow-up explicitly authorizes domain migrations/roles/private storage on that exact target. Rehearsal br-little-wave-az86ax08 expires 2026-10-18T04:00:00Z; local production link preserved. No other project/AI Gateway/hosting/client/startup/commit/push change.
+- Next local features: broader file/URL ingestion, evidence-backed memory/review, advanced graph and verified backup/restore. Do not resume cloud object/SQL knowledge ingestion automatically; L01 supersedes that architecture.
+
+Previously verified Neon integration: real browser signup/sign-in/sign-out/reload, signed JWT verification, authenticated SQL receipt persistence, actual Auth profile, invalid-token rejection and cross-identity denial. Restricted atlas_api has no superuser/BYPASSRLS. Actual owner is bound N03. A01 adds real scoped project/checkpoint MCP persistence; full source capture/search/review/graph/full MCP remain pending. No owner account/password was invented.
+
+Review app: http://localhost:4317/graph, local files mode with the completed graph open. Actual preview after final continuation:12 files/11 real connections, including notes from other project work. All three connected ATLAS tools (start/save/context) passed against this same local folder. New local decision and verified handoffs are Markdown in Vault/. No Windows startup service. Historical SQL test database remains stopped with volume preserved; local mode does not require it. Compatibility tests4318, local graph fixture4320, actual app4317.
+
+
+
+
+
+- G04 In Progress — theme/layout/resolution code implemented;136 unit cases, strict types/build/lint/format/bundle pass. S06–S07 rendered, interaction and performance acceptance pending: local browser control disabled in Work settings. See GRAPH_THEME_SPREAD_REPORT.md. Recovery: .artifacts/g04-baseline/.

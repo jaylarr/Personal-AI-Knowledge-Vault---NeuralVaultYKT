@@ -1,0 +1,217 @@
+.domain-workspace {
+  min-width: 0;
+  margin: 20px 0 28px;
+}
+.domain-panel {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--atlas-border);
+  border-radius: 9px;
+  background: var(--atlas-surface);
+}
+.domain-panel h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+.domain-panel p {
+  line-height: 1.65;
+}
+.domain-panel summary {
+  min-height: 44px;
+  padding: 11px 0;
+  cursor: pointer;
+  font-weight: 500;
+}
+.domain-panel details {
+  margin-top: 20px;
+  border-top: 1px solid var(--atlas-border);
+}
+.domain-split {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.5fr);
+  align-items: start;
+  gap: 18px;
+  min-width: 0;
+}
+.domain-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+.domain-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 14px 0;
+  font-size: 14px;
+}
+.domain-field > span {
+  color: var(--atlas-muted);
+}
+.domain-panel input:not([type="checkbox"]),
+.domain-panel select,
+.domain-panel textarea,
+.domain-actions input,
+.domain-actions select {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--atlas-text);
+  background: var(--atlas-bg);
+  border: 1px solid var(--atlas-control-border);
+  border-radius: 5px;
+  font: inherit;
+}
+.domain-panel textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+.domain-panel button,
+.domain-actions button,
+.domain-actions a {
+  min-height: 44px;
+  padding: 10px 13px;
+  color: var(--atlas-text);
+  background: var(--atlas-control);
+  border: 1px solid var(--atlas-control-border);
+  border-radius: 5px;
+  font: inherit;
+}
+.domain-panel button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.domain-panel button[aria-pressed="true"] {
+  background: var(--atlas-active-bg);
+  border-color: var(--atlas-focus);
+}
+.domain-panel a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.domain-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+}
+.domain-actions .domain-field {
+  flex: 1 1 180px;
+  margin: 0;
+}
+.domain-list {
+  padding: 0;
+  margin: 18px 0 0;
+  list-style: none;
+  max-height: 62vh;
+  overflow: auto;
+}
+.domain-list > li {
+  display: grid;
+  gap: 7px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--atlas-border);
+  min-width: 0;
+}
+.domain-list > li > button:first-child {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+}
+.domain-list span {
+  color: var(--atlas-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.domain-list strong {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.domain-panel pre {
+  min-width: 0;
+  max-width: 100%;
+  max-height: 55vh;
+  padding: 16px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.75;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  background: var(--atlas-bg);
+  border: 1px solid var(--atlas-border);
+  border-radius: 5px;
+}
+.domain-panel code,
+.domain-panel dd {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.domain-panel dd {
+  margin: 5px 0 18px;
+  font-size: 12px;
+  color: var(--atlas-muted);
+}
+.domain-panel mark {
+  color: #10150e;
+  background: var(--atlas-accent);
+}
+.domain-evidence {
+  margin: 14px 0;
+}
+.domain-checkbox {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  line-height: 1.5;
+}
+.domain-checkbox input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--atlas-accent);
+}
+.domain-empty {
+  color: var(--atlas-muted);
+  line-height: 1.7;
+  padding: 16px 0;
+}
+.domain-capture {
+  margin-bottom: 20px;
+}
+.domain-capture > summary {
+  padding: 0;
+  display: list-item;
+  margin-left: 16px;
+}
+@media (max-width: 1100px) {
+  .domain-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .domain-list {
+    max-height: 36vh;
+  }
+}
+@media (max-width: 767px) {
+  .domain-panel {
+    padding: 14px;
+  }
+  .domain-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .domain-actions {
+    gap: 8px;
+  }
+  .domain-panel h2 {
+    font-size: 19px;
+  }
+  .domain-workspace {
+    margin-top: 14px;
+  }
+}

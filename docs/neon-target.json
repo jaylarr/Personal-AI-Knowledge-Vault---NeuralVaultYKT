@@ -1,0 +1,21 @@
+{
+  "organizationId": "org-floral-darkness-38230607",
+  "projectId": "misty-fire-28366774",
+  "projectName": "ATLAS - Personal",
+  "branchName": "production",
+  "branchId": "br-withered-recipe-azwll09c",
+  "databaseName": "neondb",
+  "region": "aws-ap-southeast-1",
+  "endpointHost": "ep-still-lake-azy9a8zj.c-3.ap-southeast-1.aws.neon.tech",
+  "authBaseUrl": "https://ep-still-lake-azy9a8zj.neonauth.c-3.ap-southeast-1.aws.neon.tech/neondb/auth",
+  "authorizedServices": ["postgres", "auth", "private-storage"],
+  "domainSchemaAuthorized": true,
+  "storageBucket": "atlas-sources",
+  "rehearsal": {
+    "branchId": "br-little-wave-az86ax08",
+    "branchName": "atlas-setup-check-20261017",
+    "endpointHost": "ep-dark-hill-az2iw7dc.c-3.ap-southeast-1.aws.neon.tech",
+    "expiresAt": "2026-10-18T04:00:00Z"
+  },
+  "authorizationDate": "2026-10-17"
+}
