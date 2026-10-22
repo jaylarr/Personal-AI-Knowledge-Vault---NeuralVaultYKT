@@ -58,7 +58,7 @@ export function ownerDomainRoutes(domain: Domain, cookie: string) {
     return c.json({
       record,
       version,
-      chunks: chunkText(source.id, version.id, version.text),
+      chunks: chunkText(source.id, version.id, version.text, version.pipeline_version),
       grants: [...catalog.heads.values()].filter(
         (r) => r.kind === "grant" && r.data.source_version_id === version.id,
       ),

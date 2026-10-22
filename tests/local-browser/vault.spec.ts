@@ -59,7 +59,7 @@ test("knowledge/activity/all filters retain actual evidence and deep links", asy
   ).toHaveText("Evidence basis historical report");
 });
 test("workspace file search and graph navigation remain account-free", async ({ page }) => {
-  await page.goto("/?view=all");
+  await page.goto("/files?view=all");
   await expect(
     page.getByRole("heading", { name: "Your local knowledge vault", exact: true }),
   ).toBeVisible();

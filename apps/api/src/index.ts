@@ -6,6 +6,7 @@ import { attachStatic } from "./static.js";
 import { createNeonServices } from "./neon-services.js";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { loadPersonalHosts } from "@atlas/core/local-domain";
 import { createLocalServices } from "./local-vault.js";
 
 try {
@@ -25,6 +26,7 @@ try {
         agentId: saved.agentId,
         ...(process.env.ATLAS_AGENT_TOKEN ? { token: process.env.ATLAS_AGENT_TOKEN } : {}),
         expiresAt: saved.expiresAt,
+        personalHosts: await loadPersonalHosts(resolve(root, ".local/personal-hosts.json")),
       })
     : undefined;
   if (local) await local.vault.initialize();
@@ -46,6 +48,7 @@ try {
     process.exitCode = 1;
   });
   const close = () => {
+    local?.personal.close();
     local?.domain.close();
     server.close();
     void neon?.close();

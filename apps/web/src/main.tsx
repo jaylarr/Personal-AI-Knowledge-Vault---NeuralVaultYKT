@@ -10,6 +10,7 @@ import { App } from "./app/App.js";
 import "./styles/global.css";
 import "./styles/graph.css";
 import "./styles/local-domain.css";
+import "./styles/personal.css";
 import { AuthProvider } from "./auth/AuthProvider.js";
 import { useQuery } from "@tanstack/react-query";
 import { LocalApp } from "./app/LocalApp.js";

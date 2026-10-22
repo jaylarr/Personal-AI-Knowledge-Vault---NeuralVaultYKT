@@ -1,5 +1,7 @@
 # Architecture
 
+Personal extension (P02, 2026-10-22): browser-safe contracts feed a projectless local service composed of policy, session adapter, coverage journal, review leases, owner context selection and skill catalog/source packages. Dedicated API/MCP operations require explicit personal capabilities and host grants; old project capture credentials do not inherit access. Owner-cookie controls handle candidates, suppression and skill curation. Coverage lives under .atlas/personal/coverage, outside domain catalog admission counts. Original owner messages are streamed and returned through bounded acknowledged pages. Hooks queue metadata under current-turn consent and never start an agent/API. Installed hooks/grants/history rollout remain separately gated. Local Markdown remains source of truth; no new AI service or cloud writes.
+
 ## Local domain extension — 2026-10-18
 
 Schema3 append-only Markdown revisions and exact originals are controlled by local commit manifests. Existing K01 tools stay intact; fifteen additive tools provide evidence-based source processing, review and bounded retrieval. Browser contracts remain Node-free. Deterministic bounded workers parse/chunk local bytes; connected agents perform inference. No model API/key, embeddings, cloud knowledge writes or agent launcher is added. See LOCAL_COMPLETION_REPORT.md and BACKUP.md for current verification and remaining gates.

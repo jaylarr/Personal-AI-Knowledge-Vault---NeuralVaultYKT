@@ -301,7 +301,7 @@ function CapturePanel({
               placeholder="https://…"
             />
           </Field>
-        ) : ["file", "n8n"].includes(mode) ? (
+        ) : ["file", "n8n", "conversation"].includes(mode) ? (
           <Field label="File to preserve">
             <input
               type="file"

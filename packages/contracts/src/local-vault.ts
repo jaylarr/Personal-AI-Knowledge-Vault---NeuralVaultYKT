@@ -23,6 +23,9 @@ export const localNoteSchema = z.object({
     .regex(/^[a-f0-9]{64}$/)
     .nullable()
     .default(null),
+  personal_only: z.boolean().optional(),
+  personal_kind: z.enum(["candidate", "skill", "profile_index"]).optional(),
+  personal_suppressed: z.boolean().optional(),
   knowledge: knowledgeMetadataSchema.nullable().default(null),
   effective_state: z
     .enum(["legacy", "active", "candidate", "superseded", "conflict"])

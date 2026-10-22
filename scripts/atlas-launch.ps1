@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('mcp','start','context','save','serve')][string]$Action = 'mcp',
+  [ValidateSet('mcp','start','context','save','serve','personal')][string]$Action = 'mcp',
   [string]$Repository,
   [string]$InputFile
 )
@@ -44,7 +44,8 @@ try {
   if ($Action -eq 'mcp') {
     & $atlasNode (Join-Path $atlasRoot 'apps/mcp-server/dist/index.js')
   } else {
-    if (-not $Repository) { throw 'Repository is required.' }
+    if ($Action -ne 'personal' -and -not $Repository) { throw 'Repository is required.' }
+    if ($Action -eq 'personal') { $Repository = 'personal' }
     & $atlasNode (Join-Path $atlasRoot 'apps/mcp-server/dist/cli.js') $Action $Repository $InputFile
   }
   $atlasExitCode = $LASTEXITCODE

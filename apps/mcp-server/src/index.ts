@@ -1,3 +1,4 @@
+import { registerPersonalTools } from "./personal.js";
 import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { z, localCheckpointInputSchema, localContextInputSchema } from "@atlas/contracts";
@@ -14,6 +15,7 @@ function createServer() {
   const workflow = createWorkflow(config);
   const server = new McpServer({ name: "atlas", version: "0.1.0" });
   registerDomainTools(server, config);
+  registerPersonalTools(server, config);
   async function call(work: () => Promise<unknown>) {
     try {
       const value = await work();

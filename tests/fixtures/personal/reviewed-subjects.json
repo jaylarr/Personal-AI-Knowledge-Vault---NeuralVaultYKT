@@ -1,0 +1,79 @@
+[
+  {
+    "id": "explicit-plan",
+    "key": "workflow.plan",
+    "summary": "Propose a plan before implementing substantial new features.",
+    "applies_when": "Starting a substantial new feature for the fictional owner.",
+    "exceptions": ["This statement does not require a plan for every small edit."]
+  },
+  {
+    "id": "explicit-brief",
+    "key": "workflow.brief",
+    "summary": "Keep routine progress updates brief and concrete.",
+    "applies_when": "Reporting routine progress to the fictional owner.",
+    "exceptions": []
+  },
+  {
+    "id": "explicit-path",
+    "key": "workflow.path",
+    "summary": "Show the full project path when identifying a local project.",
+    "applies_when": "Identifying which local project is being discussed.",
+    "exceptions": []
+  },
+  {
+    "id": "explicit-copy",
+    "key": "workflow.copy",
+    "summary": "Preserve existing wording unless the owner requests copy changes.",
+    "applies_when": "Editing an existing artifact containing owner-approved wording.",
+    "exceptions": ["The owner explicitly requests a copy change."]
+  },
+  {
+    "id": "explicit-proof",
+    "key": "workflow.proof",
+    "summary": "Distinguish local test evidence from deployed behavior.",
+    "applies_when": "Explaining validation results or release status.",
+    "exceptions": []
+  },
+  {
+    "id": "explicit-mobile",
+    "key": "workflow.mobile",
+    "summary": "Verify the narrow mobile layout when designing interfaces.",
+    "applies_when": "Designing interfaces for the fictional owner.",
+    "exceptions": []
+  },
+  {
+    "id": "explicit-research",
+    "key": "workflow.research",
+    "summary": "Use direct primary sources for material research claims.",
+    "applies_when": "Researching material claims for the fictional owner.",
+    "exceptions": []
+  },
+  {
+    "id": "explicit-motion",
+    "key": "workflow.motion",
+    "summary": "Keep important controls usable with reduced motion enabled.",
+    "applies_when": "Implementing important interface controls and motion.",
+    "exceptions": []
+  },
+  {
+    "id": "update-1",
+    "key": "workflow.plan",
+    "summary": "Proceed directly for small edits; retain plan-first for substantial features.",
+    "applies_when": "Choosing the implementation workflow for a requested edit or feature.",
+    "exceptions": ["A small edit may proceed directly."]
+  },
+  {
+    "id": "update-2",
+    "key": "workflow.brief",
+    "summary": "Use concise progress updates under the owner's current correction.",
+    "applies_when": "Reporting current progress to the fictional owner.",
+    "exceptions": []
+  },
+  {
+    "id": "update-3",
+    "key": "workflow.copy",
+    "summary": "Keep original copy unless the owner explicitly requests a rewrite.",
+    "applies_when": "Editing an artifact with existing owner copy.",
+    "exceptions": ["An explicit owner rewrite request permits changing the copy."]
+  }
+]

@@ -1,5 +1,21 @@
 import { expect, test } from "@playwright/test";
 
+test("conversation capture exposes the supported JSON file input", async ({ page }) => {
+  await page.goto("/sources");
+  await page.getByText("Add source material", { exact: true }).click();
+  await page
+    .getByLabel("Capture method", { exact: true })
+    .selectOption({ label: "Select conversation turns (supported JSON)" });
+  const input = page.getByLabel("File to preserve", { exact: true });
+  await expect(input).toBeVisible();
+  await expect(input).toHaveAttribute("type", "file");
+  await expect(input).toHaveAttribute("accept", ".json");
+  await page.screenshot({
+    path: ".artifacts/domain-browser/conversation-capture.png",
+    fullPage: true,
+  });
+});
+
 test("owner captures, edits, reloads and downloads exact source bytes without an AI agent", async ({
   page,
 }) => {

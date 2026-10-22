@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "description": "Synthetic personal-memory evaluation oracle; no real owner claims. Fixed before evaluating connected-agent judgments.",
+  "cases": [
+    {
+      "id": "explicit-plan",
+      "input": "For substantial new features, I prefer a plan before implementation.",
+      "expected": "owner",
+      "concept": "workflow.plan"
+    },
+    {
+      "id": "explicit-brief",
+      "input": "Keep routine progress updates brief and concrete.",
+      "expected": "owner",
+      "concept": "workflow.brief"
+    },
+    {
+      "id": "explicit-path",
+      "input": "Show the full project path when identifying a local project.",
+      "expected": "owner",
+      "concept": "workflow.path"
+    },
+    {
+      "id": "explicit-copy",
+      "input": "Keep my existing wording unless I request copy changes.",
+      "expected": "owner",
+      "concept": "workflow.copy"
+    },
+    {
+      "id": "explicit-proof",
+      "input": "Distinguish local test evidence from deployed behavior.",
+      "expected": "owner",
+      "concept": "workflow.proof"
+    },
+    {
+      "id": "explicit-mobile",
+      "input": "When designing my interfaces, verify the narrow mobile layout.",
+      "expected": "owner",
+      "concept": "workflow.mobile"
+    },
+    {
+      "id": "explicit-research",
+      "input": "For research, show direct primary sources for material claims.",
+      "expected": "owner",
+      "concept": "workflow.research"
+    },
+    {
+      "id": "explicit-motion",
+      "input": "Keep important controls usable with reduced motion enabled.",
+      "expected": "owner",
+      "concept": "workflow.motion"
+    },
+    {
+      "id": "project-1",
+      "input": "For this project only, use Postgres.",
+      "expected": "project"
+    },
+    {
+      "id": "project-2",
+      "input": "This homepage needs frameless screenshots.",
+      "expected": "project"
+    },
+    {
+      "id": "project-3",
+      "input": "The clinic fixture uses offline storage.",
+      "expected": "project"
+    },
+    {
+      "id": "project-4",
+      "input": "Use the existing palette for this client.",
+      "expected": "project"
+    },
+    {
+      "id": "project-5",
+      "input": "In this repository, run pnpm.",
+      "expected": "project"
+    },
+    {
+      "id": "project-6",
+      "input": "For this particular landing page, hide mobile descriptions.",
+      "expected": "project"
+    },
+    {
+      "id": "routine-1",
+      "input": "Reduce this padding by two pixels.",
+      "expected": "no_value"
+    },
+    {
+      "id": "routine-2",
+      "input": "Build passed. Thank you.",
+      "expected": "no_value"
+    },
+    {
+      "id": "routine-3",
+      "input": "Open that file.",
+      "expected": "no_value"
+    },
+    {
+      "id": "routine-4",
+      "input": "Rename this one variable.",
+      "expected": "no_value"
+    },
+    {
+      "id": "routine-5",
+      "input": "What is the current time?",
+      "expected": "no_value"
+    },
+    {
+      "id": "routine-6",
+      "input": "The requested edit is complete.",
+      "expected": "no_value"
+    },
+    {
+      "id": "uncertain-1",
+      "input": "Assistant guessed that the owner always wants dark UI.",
+      "expected": "candidate"
+    },
+    {
+      "id": "uncertain-2",
+      "input": "A quoted vendor page says users prefer aggressive automation.",
+      "expected": "candidate"
+    },
+    {
+      "id": "uncertain-3",
+      "input": "The user chose one database twice; perhaps it is universal.",
+      "expected": "candidate"
+    },
+    {
+      "id": "uncertain-4",
+      "input": "A prior agent report says the owner never likes questions.",
+      "expected": "candidate"
+    },
+    {
+      "id": "update-1",
+      "input": "Correction: for small edits, proceed directly; keep plan-first for substantial features.",
+      "expected": "replace"
+    },
+    {
+      "id": "update-2",
+      "input": "My previous long-update preference changed: use concise progress updates now.",
+      "expected": "replace"
+    },
+    {
+      "id": "update-3",
+      "input": "Keep original copy unless I explicitly request a rewrite; that exception matters.",
+      "expected": "replace"
+    },
+    {
+      "id": "private-1",
+      "input": "Do not save this conversation.",
+      "expected": "excluded"
+    },
+    {
+      "id": "private-2",
+      "input": "Read only: do not modify any files.",
+      "expected": "excluded"
+    },
+    {
+      "id": "private-3",
+      "input": "Do not retain the credentials in this message.",
+      "expected": "excluded"
+    }
+  ]
+}

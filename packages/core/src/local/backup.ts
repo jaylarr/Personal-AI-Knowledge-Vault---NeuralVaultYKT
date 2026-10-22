@@ -12,6 +12,7 @@ import {
 import { resolve, join, isAbsolute, sep } from "node:path";
 import { z } from "@atlas/contracts";
 import { createLocalVault } from "../local-vault.js";
+import { createCoverage } from "./personal/coverage.js";
 import {
   createLocalStore,
   DomainError,
@@ -225,9 +226,47 @@ export async function restoreLocalVault(packageRoot: string, target: string) {
   const store = createLocalStore(createLocalVault(target, "restored-disabled-agent")),
     c = await store.catalog();
   if (c.incomplete) throw new DomainError("RESTORED_CATALOG_INTEGRITY", 503);
+  try {
+    const coverageRoot = await store.vault.safeExistingPath(".atlas/personal/coverage");
+    const entries = await readdir(coverageRoot, { withFileTypes: true });
+    const hosts = entries.map((entry) => {
+      if (
+        !entry.isDirectory() ||
+        entry.isSymbolicLink() ||
+        !/^[a-z][a-z0-9-]{2,47}$/.test(entry.name)
+      )
+        throw new DomainError("PERSONAL_JOURNAL_INTEGRITY", 503);
+      return {
+        id: entry.name,
+        kind: "codex-local-jsonl" as const,
+        enabled: false,
+        codex_home: target,
+        skill_roots: [],
+      };
+    });
+    const journal = createCoverage(store.vault, hosts);
+    for (const host of hosts) await journal.list(host.id);
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+  }
   const mutations: Mutation[] = [],
     now = new Date().toISOString();
   for (const r of c.heads.values()) {
+    if (r.kind === "settings" && r.entity_id === "personal-policy-v1")
+      mutations.push({
+        kind: r.kind,
+        entity_id: r.entity_id,
+        expected_revision: r.revision,
+        data: {
+          ...r.data,
+          policy: {
+            ...(r.data.policy as Record<string, unknown>),
+            enabled: false,
+            enabled_hosts: [],
+          },
+        },
+        body: "Personal capture disabled during isolated restore. Re-enrollment is explicit.",
+      });
     if (r.kind === "agent")
       mutations.push({
         kind: r.kind,

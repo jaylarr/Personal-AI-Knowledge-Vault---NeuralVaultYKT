@@ -1,14 +1,28 @@
-import { mkdtemp, readFile, writeFile, rm, readdir, mkdir, symlink } from "node:fs/promises";
+import {
+  mkdtemp,
+  readFile,
+  writeFile,
+  rm,
+  readdir,
+  mkdir,
+  symlink,
+  open,
+  lstat,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { randomUUID, randomBytes } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { beforeEach, afterEach, describe, it, expect } from "vitest";
+import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import { createLocalVault, encodeNote, digest } from "@atlas/core/local-vault";
 import { createApp } from "../../apps/api/src/app.js";
 import { loadConfig } from "../../apps/api/src/config.js";
 import { createLocalServices } from "../../apps/api/src/local-vault.js";
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return { ...actual, open: vi.fn(actual.open) };
+});
 let root: string;
 const v = () => createLocalVault(root, "fixture-agent");
 const note = {
@@ -32,6 +46,59 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 describe("local Markdown source of truth", () => {
+  it("unchanged snapshots allocate no temporary files and preserve history mtimes", async () => {
+    const p = await project();
+    const saved = await v().capture(p.id, note);
+    await v().snapshot();
+    const folder = join(root, ".atlas/history", digest(saved.id).slice(0, 32));
+    const names = await readdir(folder);
+    const before = await Promise.all(
+      names.map(async (name) => (await lstat(join(folder, name))).mtimeMs),
+    );
+    expect(vi.mocked(open).mock.calls.some(([path]) => String(path).endsWith(".tmp"))).toBe(true);
+    vi.mocked(open).mockClear();
+    await v().snapshot();
+    await v().snapshot();
+    expect(
+      vi.mocked(open).mock.calls.filter(([path]) => String(path).endsWith(".tmp")),
+    ).toHaveLength(0);
+    expect(await readdir(folder)).toEqual(names);
+    expect(
+      await Promise.all(names.map(async (name) => (await lstat(join(folder, name))).mtimeMs)),
+    ).toEqual(before);
+  });
+  it("accepts safe non-UUID graph focus IDs and rejects unsafe focus values", async () => {
+    const local = createLocalServices(root, { agentId: "fixture-agent" });
+    const app = createApp(loadConfig({}), undefined, undefined, local);
+    const headers = { Cookie: `atlas_local=${local.cookie}` };
+    try {
+      await local.vault.initialize();
+      await writeFile(
+        join(root, "collections.md"),
+        encodeNote({ atlas_id: "imported-collections" }, "# Collections"),
+      );
+      for (const focus of ["imported-collections", `file-${"a".repeat(64)}`]) {
+        expect(
+          (
+            await app.request(`http://localhost:4317/api/v1/local/vault?focus=${focus}&depth=2`, {
+              headers,
+            })
+          ).status,
+        ).toBe(200);
+      }
+      for (const focus of ["../escape", "a/b", "a".repeat(129)])
+        expect(
+          (
+            await app.request(
+              `http://localhost:4317/api/v1/local/vault?focus=${encodeURIComponent(focus)}`,
+              { headers },
+            )
+          ).status,
+        ).toBe(400);
+    } finally {
+      local.domain.close();
+    }
+  });
   it("serializes independent Node processes through the same vault lock", async () => {
     const code = `import {createLocalVault,digest} from '@atlas/core/local-vault'; const v=createLocalVault(process.argv[1],'fixture-agent'); const p=await v.ensure({name:'Process project',repository_digest:digest('process-project')}); const n=await v.capture(p.id,JSON.parse(process.argv[2])); console.log(n.id);`;
     const run = () =>

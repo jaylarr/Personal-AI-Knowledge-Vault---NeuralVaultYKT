@@ -9,6 +9,7 @@ import {
   type LocalAudience,
   type LocalCapability,
   type LocalEvidence,
+  type LocalNote,
 } from "@atlas/contracts";
 import { DomainError, head, sha256, type Catalog, type LocalStore } from "./transactions.js";
 import { versionData, sourceData } from "./sources.js";
@@ -86,12 +87,48 @@ export function canReadRecord(c: Catalog, actor: LocalActor, data: Record<string
     return false;
   }
 }
+export function canReadKnowledge(c: Catalog, actor: LocalActor, note: LocalNote) {
+  if (actor.kind === "owner") return true;
+  if (actor.kind !== "agent") return false;
+  const agent = currentAgent(c, actor);
+  if (note.personal_kind) return false;
+  if (note.personal_only) {
+    const grant = c.heads.get(`settings:personal-grant-${agent.id}`);
+    const policy = c.heads.get("settings:personal-policy-v1")?.data.policy as
+      | { enabled?: boolean }
+      | undefined;
+    if (
+      !policy?.enabled ||
+      !agent.capabilities.includes("read_personal_memory") ||
+      !Array.isArray(grant?.data.capabilities) ||
+      !grant.data.capabilities.includes("read_personal_memory")
+    )
+      return false;
+  }
+  return (
+    agent.capabilities.includes("read") &&
+    (note.knowledge?.scope === "owner" ||
+      (agent.project_ids.includes(note.project_id ?? "") &&
+        c.heads.get(`project_metadata:${note.project_id}`)?.data.archived !== true))
+  );
+}
 const createAgentInput = z
   .object({
     request_key: z.string(),
     name: z.string().trim().min(1).max(160),
     expires_at: z.string().datetime(),
-    capabilities: z.array(z.enum(["read", "propose", "process_knowledge"])).default([]),
+    capabilities: z
+      .array(
+        z.enum([
+          "read",
+          "propose",
+          "process_knowledge",
+          "read_personal_memory",
+          "capture_personal_memory",
+          "review_personal_sessions",
+        ]),
+      )
+      .default([]),
     project_ids: z.array(z.uuid()).default([]),
     scopes: z.array(z.enum(["global_development", "agent_private", "shared_agents"])).default([]),
   })
@@ -123,7 +160,12 @@ export function createAuthorization(store: LocalStore, installed: InstalledAgent
               expires_at: expires,
               revoked_at: null,
               compatibility: true,
-              capabilities: ["capture_project_knowledge"],
+              capabilities: [
+                "capture_project_knowledge",
+                "read_personal_memory",
+                "capture_personal_memory",
+                "review_personal_sessions",
+              ],
               project_ids: [],
               scopes: [],
               item_ids: [],
@@ -204,7 +246,17 @@ export function createAuthorization(store: LocalStore, installed: InstalledAgent
         disabled: z.boolean().optional(),
         revoke: z.boolean().optional(),
         capabilities: z
-          .array(z.enum(["read", "propose", "process_knowledge", "capture_project_knowledge"]))
+          .array(
+            z.enum([
+              "read",
+              "propose",
+              "process_knowledge",
+              "capture_project_knowledge",
+              "read_personal_memory",
+              "capture_personal_memory",
+              "review_personal_sessions",
+            ]),
+          )
           .optional(),
         project_ids: z.array(z.uuid()).optional(),
         scopes: z
