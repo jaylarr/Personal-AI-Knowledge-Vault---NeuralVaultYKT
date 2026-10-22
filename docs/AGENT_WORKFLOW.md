@@ -1,5 +1,7 @@
 # Automatic project knowledge
 
+Personal workflow (P02): atlas_personal_context works without a repository. atlas_personal_skills returns metadata first and requires an expected digest for bodies. Scan/review tools page inventory, claim a lease, acknowledge original owner-message pages and complete with verified references or no-value/candidate/failure outcomes. Personal capabilities and host grants are independent of project tools. See CODEX_GLOBAL_INSTRUCTIONS.md and PERSONAL_MEMORY_ACCEPTANCE.md. Native memories remain separate; tool attempts never establish complete coverage.
+
 ## Local domain tools — 2026-10-18
 
 Fresh MCP processes expose eighteen tools. The original `atlas_start_project`, `atlas_save_checkpoint` and `atlas_project_context` retain K01 agent-recorded knowledge behavior. Project context can additionally return an optional `reviewed_context` packet when the owner explicitly gave that compatibility agent domain read access for the project. Its serialized size shares the existing character budget; insufficiency is explicit. Reviewed facts and automatic agent-recorded notes retain separate provenance. The fifteen additive tools support bounded retrieval, proposals and explicitly granted processing tasks. Tool availability grants no new permissions.

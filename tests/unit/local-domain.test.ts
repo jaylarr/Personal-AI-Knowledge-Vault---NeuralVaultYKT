@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createLocalVault } from "@atlas/core/local-vault";
 import {
   createLocalStore,
+  createDomainService,
   createSourceService,
   chunkText,
   sha256,
@@ -31,18 +32,22 @@ import { createApp } from "../../apps/api/src/app.js";
 import { loadConfig } from "../../apps/api/src/config.js";
 
 let root: string;
+let stores: ReturnType<typeof createLocalStore>[];
 const owner: LocalActor = { kind: "owner", id: "fixture-owner" };
 const key = () => randomUUID();
 beforeEach(async () => {
+  stores = [];
   root = await mkdtemp(join(tmpdir(), "atlas-domain-"));
 });
 afterEach(async () => {
+  for (const store of stores) store.close();
   if (!root.includes("atlas-domain-")) throw Error("Invalid fixture root");
   await rm(root, { recursive: true, force: true });
 });
 function services() {
   const vault = createLocalVault(root, "fixture-agent"),
     store = createLocalStore(vault);
+  stores.push(store);
   return {
     vault,
     store,
@@ -51,7 +56,150 @@ function services() {
     tasks: createCollaboration(store),
   };
 }
+async function submittedMemory(s: ReturnType<typeof services>) {
+  const saved = await s.sources.capture(owner, {
+    request_key: key(),
+    title: "Lifecycle fixture",
+    content: "The fictional fixture uses stable storage.",
+  });
+  await s.sources.processJob(String(saved.job_id));
+  const credential = await s.auth.create(owner, {
+    request_key: key(),
+    name: "Lifecycle processor",
+    expires_at: new Date(Date.now() + 3600000).toISOString(),
+    capabilities: ["process_knowledge", "propose", "read"],
+  });
+  const actor = await s.auth.authenticate(String(credential.token));
+  const source = head(await s.store.catalog(), "source", String(saved.source_id));
+  const granted = await s.tasks.grant(owner, source.entity_id, {
+    request_key: key(),
+    expected_revision: source.revision,
+    agent_id: actor.id,
+    source_version_id: saved.version_id,
+    expires_at: new Date(Date.now() + 3600000).toISOString(),
+  });
+  const taskId = String((granted.task_ids as string[])[0]);
+  const claim = await s.tasks.claim(actor, taskId, 8192);
+  const read = await s.tasks.read(actor, taskId, claim.lease_token, { token_budget: 8192 });
+  const chunk = read.chunks[0]!;
+  const submitted = await s.tasks.submit(actor, taskId, claim.lease_token, key(), {
+    contract_version: 1,
+    source_version_id: saved.version_id,
+    expected_source_revision: 1,
+    coverage_chunk_ids: claim.chunk_ids,
+    classifications: [],
+    tags: [],
+    entities: [],
+    relationships: [],
+    memories: [
+      {
+        candidate_id: "storage",
+        type: "project",
+        title: "Lifecycle storage",
+        subject_key: "fixture.lifecycle",
+        summary: "Use stable storage.",
+        structured_content: {},
+        claim_kind: "explicit_fact",
+        confidence: 0.9,
+        evidence: [
+          {
+            source_version_id: saved.version_id,
+            chunk_id: chunk.id,
+            start_offset: chunk.start_offset,
+            end_offset: chunk.end_offset,
+            quote_sha256: sha256(chunk.text),
+          },
+        ],
+      },
+    ],
+  });
+  return {
+    saved,
+    taskId,
+    memory: head(await s.store.catalog(), "memory", submitted.candidates[0]!.id),
+  };
+}
 describe("local domain integrity", () => {
+  it("completes a replacement submission when an active memory is superseded", async () => {
+    const s = services();
+    try {
+      const { saved, taskId, memory } = await submittedMemory(s);
+      const old = await s.tasks.propose(owner, {
+        request_key: key(),
+        title: "Earlier storage",
+        subject_key: "fixture.lifecycle",
+        type: "project",
+        summary: "Earlier stable storage.",
+        structured_content: {},
+        claim_kind: "explicit_fact",
+        scope: "personal",
+        project_id: null,
+        evidence: memory.data.evidence,
+      });
+      const activeId = String(old.memory_id);
+      await s.tasks.review(owner, "memory", activeId, {
+        request_key: key(),
+        expected_revision: 1,
+        action: "approve",
+        reason: "Controlled owner review",
+      });
+      expect(head(await s.store.catalog(), "task", taskId).data.state).toBe("submitted");
+      await s.tasks.review(owner, "memory", activeId, {
+        request_key: key(),
+        expected_revision: 2,
+        action: "supersede",
+        replacement_id: memory.entity_id,
+        expected_replacement_revision: memory.revision,
+        reason: "Controlled replacement review",
+      });
+      const c = await s.store.catalog();
+      expect(head(c, "task", taskId).data.state).toBe("completed");
+      expect(sourceData(c, String(saved.source_id)).processing_state).toBe("organized");
+      expect(head(c, "source", String(saved.source_id)).body).toContain("State: organized");
+    } finally {
+      s.store.close();
+    }
+  });
+  it("returns a wholly rejected submission to captured with matching Markdown", async () => {
+    const s = services();
+    try {
+      const { saved, taskId, memory } = await submittedMemory(s);
+      await s.tasks.review(owner, "memory", memory.entity_id, {
+        request_key: key(),
+        expected_revision: memory.revision,
+        action: "reject",
+        reason: "Controlled rejection",
+      });
+      const c = await s.store.catalog();
+      expect(head(c, "task", taskId).data.state).toBe("completed");
+      expect(sourceData(c, String(saved.source_id)).processing_state).toBe("captured");
+      expect(head(c, "source", String(saved.source_id)).body).toContain("State: captured");
+    } finally {
+      s.store.close();
+    }
+  });
+  it("preserves completed jobs and submitted tasks when the source version is edited", async () => {
+    const s = services();
+    try {
+      const { saved, taskId } = await submittedMemory(s);
+      const c = await s.store.catalog(),
+        source = head(c, "source", String(saved.source_id)),
+        job = head(c, "job", String(saved.job_id)),
+        task = head(c, "task", taskId);
+      expect(job.data.state).toBe("completed");
+      await s.sources.edit(owner, source.entity_id, {
+        request_key: key(),
+        expected_revision: source.revision,
+        expected_file_digest: source.file_digest,
+        content: "Replacement fictional source.",
+      });
+      const next = await s.store.catalog();
+      expect(head(next, "job", job.entity_id)).toEqual(job);
+      expect(head(next, "task", task.entity_id)).toEqual(task);
+    } finally {
+      s.store.close();
+    }
+  });
   it("preserves exact source bytes, whitespace and Unicode spans across fresh stores", async () => {
     const s = services(),
       content = "  # Brief\r\n\r\nUse stable_id with 🧠 evidence.  \r\n",
@@ -217,6 +365,209 @@ describe("local domain integrity", () => {
 });
 
 describe("local API, retrieval and recovery", () => {
+  it("merges durable vault knowledge into general retrieval and activity with scoped agent reads", async () => {
+    const vault = createLocalVault(root, "fixture-agent");
+    const domain = createDomainService(vault, { id: "fixture-installed" });
+    try {
+      const project = await vault.ensure({
+        name: "Knowledge fixture",
+        repository_digest: sha256("knowledge-bridge"),
+      });
+      const other = await vault.ensure({
+        name: "Other knowledge",
+        repository_digest: sha256("other-knowledge"),
+      });
+      const capture = (projectId: string, label: string, ownerScope = false, candidate = false) =>
+        vault.capture(projectId, {
+          request_key: key(),
+          kind: "decision",
+          title: label,
+          markdown: `${label} has a durable bridgekeyword body with applicability and evidence.`,
+          provenance: {
+            paths: ["fixture.md"],
+            verification: "Controlled knowledge bridge fixture",
+          },
+          knowledge: {
+            type: ownerScope ? "constraint" : "project_fact",
+            scope: ownerScope ? "owner" : "project",
+            key: `fixture.${label.replaceAll(" ", "-").toLowerCase()}`,
+            summary: `${label} bridgekeyword summary`,
+            applies_when: "Testing local knowledge retrieval.",
+            topics: ["bridgekeyword"],
+            basis: candidate ? "inference" : ownerScope ? "owner_explicit" : "verified_observation",
+            ...(ownerScope
+              ? { source_statement: "The fixture owner requires bridgekeyword evidence." }
+              : {}),
+          },
+        });
+      const note = await capture(project.id, "Project knowledge");
+      const shared = await capture(project.id, "Owner constraint", true);
+      const foreign = await capture(other.id, "Foreign knowledge");
+      const candidate = await capture(project.id, "Candidate knowledge", false, true);
+      const packet = await domain.retrieval.retrieve(owner, {
+        query: "bridgekeyword",
+        project_id: project.id,
+        token_budget: 8192,
+        detail: "detailed",
+      });
+      expect(new Set(packet.items.map((i) => i.id))).toEqual(new Set([note.id, shared.id]));
+      expect(packet.items[0]?.id).toBe(shared.id);
+      expect(packet.items.find((i) => i.id === note.id)?.summary).toBe(note.markdown);
+      const trace = head(await domain.store.catalog(), "trace", packet.trace_id);
+      expect(trace.data.ranks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ item_id: note.id, origin: "vault_knowledge" }),
+        ]),
+      );
+      expect(trace.data.revisions).toContain(note.file_digest);
+      expect(
+        (await domain.changes(owner)).find((event) => event.item_id === note.id),
+      ).toMatchObject({ kind: "knowledge (project_fact)", revision: 1 });
+      expect(
+        (
+          await domain.retrieval.retrieve(
+            owner,
+            { query: "bridgekeyword", token_budget: 8192 },
+            { kind: "memory" },
+          )
+        ).items,
+      ).toEqual([]);
+      expect(
+        (
+          await domain.retrieval.retrieve(owner, {
+            query: "bridgekeyword",
+            project_id: project.id,
+            include_history: true,
+            token_budget: 8192,
+          })
+        ).items.some((i) => i.id === candidate.id),
+      ).toBe(true);
+      for (const read of [false, true]) {
+        const credential = await domain.auth.create(owner, {
+          request_key: key(),
+          name: `Knowledge reader ${read}`,
+          expires_at: new Date(Date.now() + 3600000).toISOString(),
+          capabilities: read ? ["read"] : [],
+          project_ids: [project.id],
+        });
+        const actor = await domain.auth.authenticate(String(credential.token));
+        const result = await domain.retrieval.retrieve(actor, {
+          query: "bridgekeyword",
+          include_history: true,
+          token_budget: 8192,
+        });
+        expect(new Set(result.items.map((i) => i.id))).toEqual(
+          new Set(read ? [note.id, shared.id] : []),
+        );
+        expect(result.items.some((i) => [foreign.id, candidate.id].includes(i.id))).toBe(false);
+        expect((await domain.changes(actor)).some((event) => event.item_id === foreign.id)).toBe(
+          false,
+        );
+      }
+      expect(
+        (
+          await domain.retrieval.retrieve(
+            owner,
+            { query: "bridgekeyword" },
+            { recent_until: "2000-01-01T00:00:00.000Z" },
+          )
+        ).items,
+      ).toEqual([]);
+      expect(
+        (
+          await domain.retrieval.retrieve(
+            owner,
+            { query: "bridgekeyword" },
+            { recent_since: "2100-01-01T00:00:00.000Z" },
+          )
+        ).items,
+      ).toEqual([]);
+    } finally {
+      domain.close();
+    }
+  }, 30000);
+  it("accepts owner-managed capture credentials and checks revocation on every request", async () => {
+    const local = createLocalServices(root, { agentId: "fixture-installed" });
+    try {
+      const credential = await local.domain.auth.create(owner, {
+        request_key: key(),
+        name: "Managed capture",
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        capabilities: [],
+      });
+      const id = String(credential.agent_id),
+        token = String(credential.token);
+      expect(await local.valid(token)).toBe(false);
+      await local.domain.auth.update(owner, id, {
+        request_key: key(),
+        expected_revision: 1,
+        capabilities: ["capture_project_knowledge"],
+      });
+      expect(await local.valid(token)).toBe(true);
+      const app = createApp(loadConfig({}), undefined, undefined, local);
+      const response = await app.request("http://localhost:4317/api/v1/agent/projects/ensure", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Managed capture fixture",
+          repository_digest: sha256("managed-capture"),
+        }),
+      });
+      expect(response.status).toBe(200);
+      await local.domain.auth.update(owner, id, {
+        request_key: key(),
+        expected_revision: 2,
+        revoke: true,
+      });
+      expect(await local.valid(token)).toBe(false);
+    } finally {
+      local.domain.close();
+    }
+  });
+  it("keeps trace bytes outside admission counts across warm and cold catalogs", async () => {
+    const s = services();
+    let fresh: ReturnType<typeof services> | undefined;
+    try {
+      const ids = Array.from({ length: 36 }, () => key());
+      await s.store.transaction(owner, key(), { fixture: "large-traces" }, () => ({
+        mutations: ids.map((id) => ({
+          kind: "trace" as const,
+          entity_id: id,
+          expected_revision: 0,
+          data: { id },
+          body: "x".repeat(1900000),
+        })),
+        result: {},
+      }));
+      const saved = await s.sources.capture(owner, {
+        request_key: key(),
+        title: "After traces",
+        content: "Still admitted.",
+      });
+      expect(head(await s.store.catalog(), "trace", ids[0]!).entity_id).toBe(ids[0]);
+      s.store.close();
+      fresh = services();
+      const c = await fresh.store.catalog();
+      expect(c.incomplete).toBe(false);
+      expect(head(c, "trace", ids.at(-1)!).entity_id).toBe(ids.at(-1));
+      const rebuilds = fresh.store.diagnostics().catalog_rebuilds;
+      await fresh.store.catalog();
+      expect(
+        fresh.store.diagnostics().catalog_rebuilds,
+        fresh.store.diagnostics().invalidation,
+      ).toBe(rebuilds);
+      const source = head(c, "source", String(saved.source_id));
+      await fresh.sources.edit(owner, source.entity_id, {
+        request_key: key(),
+        expected_revision: source.revision,
+        expected_file_digest: source.file_digest,
+        content: "Admitted after cold trace loading.",
+      });
+    } finally {
+      fresh?.store.close();
+      s.store.close();
+    }
+  }, 60000);
   it("reports omitted critical constraints within the complete escaped Unicode packet budget", () => {
     const items = Array.from({ length: 3 }, () => ({
       id: randomUUID(),

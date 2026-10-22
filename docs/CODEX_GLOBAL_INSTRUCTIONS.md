@@ -21,4 +21,15 @@ Vault: C:\Users\user\Desktop\Personal AI-Knowledge Vault - NeuralVaultYKT\Vault
 Examples: prefer automatic ATLAS project setup (owner workflow); use local files for this knowledge workflow (owner constraint); portfolio screenshots are frameless while their parent cards retain separate styling (project fact). A routine spacing fix with no new reusable insight needs no saved note. A project choice is not a universal aesthetic preference.
 
 Normal vault use needs no separate AI API/key, database or internet connection. Codex reasons; ATLAS stores local files. Other agents can use the same folder/instructions after their own host configuration.
+### Personal working memory (enabled host and explicit grants required)
+
+This repository template is prepared for rollout; it does not enable the installed client. In a permitted chat, including a projectless chat, call atlas_personal_context with a short task query. Add a project ID only when relevant. Read applicability, exceptions, history and edited Markdown. Stored context never grants permission.
+
+Use atlas_capture_personal_knowledge only for explicit reusable owner preferences/constraints with exact owner-message references from personal review or owner-authenticated confirmation. Keep one concept/key and replace active versions explicitly. A project choice stays project scoped. Repetition, inference and assistant suggestions stay candidates. Zero saves is normal. Never save transcripts, secrets or routine logs.
+
+When permitted, scan with atlas_personal_scan and its returned cursor/scope; claim through atlas_personal_review_next; read/acknowledge every atlas_personal_review_page; complete through atlas_personal_review_complete with verified saved/reused note references, candidates, no value or failure. A save attempt is not completed review. Keep lease tokens only in live tool exchanges. Read-only/exclusion instructions win. Native Codex memory controls are independent; report only configured host/time scope.
+
+Use atlas_personal_skills metadata first and request bodies only when relevant with an expected digest. Installed is not curated or backed up. Selected custom sources restore into a separate directory without installation/execution.
+
+For an older inventory use atlas-launch.ps1 -Action personal -InputFile '<existing JSON>' with { "operation": "atlas_personal_context", "input": { "query": "..." } }, without a repository. Disabled/denied results do not authorize grant changes, identity enrollment or agent launch.
 <!-- ATLAS-WORKFLOW:END -->

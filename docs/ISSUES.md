@@ -1,5 +1,17 @@
 # Issues
 
+## I-016 — P02 personal working memory (Resolved locally; rollout pending, 2026-10-22)
+
+Implemented selective owner capture, explicit personal grants, separate source-review receipts, candidate/suppression controls, skill references/packages and personal UI. Strict/build/bundle and all final unit/local/MCP/browser suites pass. Prior latency, CSP-fixture and installer failures are retained with corrections in PERSONAL_MEMORY_IMPLEMENTATION_REPORT.md. No old timeout/graph threshold was relaxed. Native transcript support remains version/host scoped; actual installed client/grants, historical application, fresh-chat acceptance and another host remain G01–G04. Installed config.toml differs from the older planning snapshot and was not edited by this execution; recheck it before rollout.
+
+## I-015 — F01–F06 local core remediation (Resolved locally, 2026-10-20)
+
+Corrected redundant history/receipt fsync writes, trace output/byte admission, small-catalog watcher activation and cold directory identities, submission supersession/rejection aggregation, stale source Markdown, terminal job/task fencing, pipeline-aware chunks, durable knowledge retrieval/activity, owner-managed capture credentials, conversation file input and safe non-UUID graph focus. Regressions retain scope/revocation, current evidence, admission and direct-edit protection. No dependency/contract/cloud/client configuration changes.
+
+Final verification: 171/171 unit, 29/29 local (23 overlap unit), 2/2 MCP/process, 14/14 domain-browser, 21/21 local-browser; types/lint/format/build and 11 bundle-boundary checks pass. Lint reports 69 warnings/17 infos. All 51 original and 44 current visible Markdown hashes plus source-brief SHA256 remain unchanged. CORE_FLAWS_REMEDIATION_REPORT.md records exact scope, logs and limits.
+
+Initial Windows sandbox hard-link/junction failures required normal filesystem execution. A cold `.atlas` event caused cache rebuilds until validated parent identities were remembered. Pagination timed out in earlier runs; explicit fixture watcher cleanup and lazy domain materialization are retained, and final suites pass with unchanged timeouts. First full browser run passed20/21 with High/effective-DPR2 at29.5 FPS versus the existing30 FPS threshold; isolated Auto selected Medium/effective-DPR1.5 and passed51.4 FPS, and the final full suite passed21/21. Different tiers and earlier failures remain visible; no uniform High/DPR2 performance claim is made. No graph renderer/test threshold was changed.
+
 ## I-014 — L01 local migration and graph verification (Resolved)
 
 Removed an approval-rejected credential query/export; safer read-only knowledge-only migration passed. Authorized NTFS execution resolved sandbox hard-link denial. Strict SVG/React/a11y lint fixes retained all checks. Browser tests corrected full-text-reference and async-bootstrap assumptions. Visual QA caught tiny/offscreen mobile graph; readable viewport/pan/resize recentering and visible-node regression pass. Excluded Vault from Biome after it reformatted generated snapshot JSON whitespace; deep data equality and restored exact-byte hashes verified before redundant staging cleanup. No source Markdown loss or cloud write/delete. See LOCAL_VAULT_REPORT.md.
@@ -61,4 +73,3 @@ First compilation required async union-return callbacks and explicit optional un
 ## I-012 — Controlled browser harness and bundle split (Resolved)
 
 First owner browser harness failed to resolve @hono/node-server from the root tooling package; declared the same exact2.1.5 dev dependency and updated lockfile. Static SDK imports initially defeated lazy loading and produced a563kB chunk; moved SDK/client and workspace loading behind dynamic imports. Final main bundle299.06kB and build warnings gone. Two controlled owner browser tests pass. npm start initially found occupied4317; inspected/verified the ATLAS node entrypoint, stopped only that preview process and restarted on the same port. No alternate port or startup service installed.
-

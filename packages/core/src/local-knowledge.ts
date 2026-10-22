@@ -15,6 +15,7 @@ export function knowledgeDigest(k: KnowledgeFields, markdown: string) {
         topics: [...k.topics].sort(),
         basis: k.basis,
         markdown: markdown.trim(),
+        ...(k.source_refs?.length ? { source_refs: k.source_refs } : {}),
       }),
     )
     .digest("hex");
@@ -81,6 +82,7 @@ export function selectKnowledgeContext(
   notes: LocalNote[],
   projectId: string,
   input: LocalContextInput,
+  excludedOwnerKeys: ReadonlySet<string> = new Set(),
 ) {
   const priority = { constraint: 0, preference: 1, decision: 2, lesson: 3, project_fact: 4 };
   const stable = (a: LocalNote, b: LocalNote) =>
@@ -90,8 +92,10 @@ export function selectKnowledgeContext(
   let eligible = notes.filter(
     (n) =>
       !n.archived &&
+      !n.personal_only &&
       n.knowledge &&
       n.effective_state === "active" &&
+      !(n.knowledge.scope === "owner" && excludedOwnerKeys.has(n.knowledge.key)) &&
       (n.knowledge.scope === "owner" || n.project_id === projectId),
   );
   if (input.query.trim()) {

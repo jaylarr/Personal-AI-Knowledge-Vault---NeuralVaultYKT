@@ -1,3 +1,4 @@
+import { suppressedOwnerKeys } from "./personal/policy.js";
 import { lexicalIndex, lexicalRevision } from "./lexical-index.js";
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import {
@@ -9,6 +10,7 @@ import {
   type LocalActor,
   type LocalContextPacket,
   type LocalDomainRecord,
+  type LocalNote,
 } from "@atlas/contracts";
 import {
   DomainError,
@@ -18,7 +20,12 @@ import {
   type LocalStore,
   type Catalog,
 } from "./transactions.js";
-import { canReadRecord, assertRead, assertEvidenceRead } from "./authorization.js";
+import {
+  canReadRecord,
+  canReadKnowledge,
+  assertRead,
+  assertEvidenceRead,
+} from "./authorization.js";
 import {
   sourceData,
   versionData,
@@ -154,6 +161,29 @@ function toItem(c: Catalog, r: LocalDomainRecord, detail: string, history = fals
   };
 }
 export function createRetrieval(store: LocalStore) {
+  let knowledgeCache: { rebuilds: number; at: number; notes: LocalNote[] } | undefined;
+  async function knowledgeNotes(c: Catalog) {
+    const rebuilds = store.diagnostics().catalog_rebuilds;
+    if (knowledgeCache?.rebuilds === rebuilds && Date.now() - knowledgeCache.at < 2000)
+      return knowledgeCache.notes;
+    const hasKnowledgeFolder = await Promise.all(
+      ["Owner", "Projects"].map(async (path) => {
+        try {
+          await store.vault.safeExistingPath(path);
+          return true;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+          return false;
+        }
+      }),
+    );
+    const notes =
+      c.heads.size < 1000 || hasKnowledgeFolder.some(Boolean)
+        ? (await store.vault.snapshot()).notes.filter((n) => Boolean(n.knowledge) && !n.archived)
+        : [];
+    knowledgeCache = { rebuilds, at: Date.now(), notes };
+    return notes;
+  }
   let cachedIndex:
     | { revision: string; documents: Map<string, string>; heads: Map<string, string> }
     | undefined;
@@ -305,11 +335,111 @@ export function createRetrieval(store: LocalStore) {
             frontier = next;
           }
         }
-        const ordered = [...selected.values()],
+        const lexicalIds = new Set(records.map((r) => r.entity_id));
+        const ranked = [...selected.values()].map((r) => {
+          return {
+            id: r.entity_id,
+            critical: r.data.critical === true,
+            toItem() {
+              const item = toItem(c, r, v.detail, v.include_history && actor.kind === "owner");
+              if (options.recent)
+                item.summary = `Revision ${r.revision} · ${r.created_at} · ${r.actor.kind}: ${r.actor.id}. ${item.summary}`;
+              return item;
+            },
+            revision: r.id,
+            digest: r.file_digest,
+            created_at: r.created_at,
+            score: score(r),
+            origin: lexicalIds.has(r.entity_id) ? "lexical_selection" : "approved_graph_expansion",
+          };
+        });
+        if (
+          !options.kind &&
+          !options.item_id &&
+          !options.related_to &&
+          !v.collection_id &&
+          !v.memory_types
+        ) {
+          for (const n of await knowledgeNotes(c)) {
+            const knowledge = n.knowledge;
+            if (!knowledge) continue;
+            if (
+              (n.knowledge?.scope === "owner" && suppressedOwnerKeys(c).has(n.knowledge.key)) ||
+              !canReadKnowledge(c, actor, n) ||
+              !(actor.kind === "owner" && v.include_history
+                ? ["active", "candidate", "superseded"].includes(n.effective_state ?? "")
+                : n.effective_state === "active") ||
+              (v.project_id && n.project_id !== v.project_id && n.knowledge?.scope !== "owner") ||
+              (options.recent_since && (!n.created_at || n.created_at < options.recent_since)) ||
+              (options.recent_until && (!n.created_at || n.created_at > options.recent_until))
+            )
+              continue;
+            const title = n.title.toLocaleLowerCase(),
+              subject = knowledge.key.toLocaleLowerCase(),
+              text = [
+                n.title,
+                knowledge.key,
+                knowledge.summary,
+                knowledge.topics.join(" "),
+                knowledge.applies_when,
+                n.markdown,
+              ]
+                .join(" ")
+                .toLocaleLowerCase();
+            const lexicalScore =
+              (query && (title === query || subject === query) ? 10000 : 0) +
+              tokens.reduce(
+                (sum, token, index) =>
+                  sum +
+                  (subject === token
+                    ? 200
+                    : wholeTokens[index]?.test(text)
+                      ? 100
+                      : title.includes(token)
+                        ? 50
+                        : text.includes(token)
+                          ? 5
+                          : 0),
+                0,
+              );
+            if (query && lexicalScore <= 0) continue;
+            const critical = n.knowledge?.type === "constraint";
+            ranked.push({
+              id: n.id,
+              critical,
+              toItem: (): Item => ({
+                id: n.id,
+                type: "knowledge",
+                title: n.title,
+                summary:
+                  v.detail === "detailed" ? n.markdown : (n.knowledge?.summary ?? n.markdown),
+                status: n.effective_state,
+                critical,
+                source_refs: [],
+              }),
+              revision: n.file_digest ?? "",
+              digest: n.file_digest ?? "",
+              created_at: n.created_at ?? "",
+              score: lexicalScore + (critical ? 100 : 0),
+              origin: "vault_knowledge",
+            });
+          }
+          ranked.sort(
+            (a, b) =>
+              (options.recent ? b.created_at.localeCompare(a.created_at) : 0) ||
+              Number(b.critical) - Number(a.critical) ||
+              b.score - a.score ||
+              a.id.localeCompare(b.id),
+          );
+        }
+        const ordered = options.limit ? ranked.slice(0, options.limit) : ranked,
           actorHash = sha256(canonical(actor)).slice(0, 32),
           queryHash = sha256(canonical({ ...v, continuation: undefined, options })).slice(0, 32),
           revision = sha256(
-            canonical({ index: indexRevision, items: ordered.map((r) => [r.id, r.file_digest]) }),
+            canonical({
+              index: indexRevision,
+              items: ordered.map((r) => [r.id, r.revision, r.digest]),
+            }),
           ).slice(0, 32);
         let offset = 0;
         if (v.continuation) {
@@ -319,12 +449,7 @@ export function createRetrieval(store: LocalStore) {
           offset = n;
         }
         const remaining = ordered.slice(offset),
-          items = remaining.slice(0, 100).map((r) => {
-            const item = toItem(c, r, v.detail, v.include_history && actor.kind === "owner");
-            if (options.recent)
-              item.summary = `Revision ${r.revision} · ${r.created_at} · ${r.actor.kind}: ${r.actor.id}. ${item.summary}`;
-            return item;
-          });
+          items = remaining.slice(0, 100).map((r) => r.toItem());
         const placeholder = cursor([
           actorHash,
           queryHash,
@@ -345,7 +470,7 @@ export function createRetrieval(store: LocalStore) {
         );
         packet.has_more ||= remaining.length > items.length;
         if (
-          remaining.slice(items.length).some((r) => r.data.critical === true) &&
+          remaining.slice(items.length).some((r) => r.critical) &&
           !packet.warnings.some((w) => w.startsWith("BUDGET_INSUFFICIENT"))
         )
           packet.warnings.push(
@@ -353,7 +478,7 @@ export function createRetrieval(store: LocalStore) {
           );
         if (packet.has_more && packet.items.length) {
           const last = packet.items.at(-1)!;
-          const nextOffset = ordered.findIndex((r) => r.entity_id === last.id) + 1;
+          const nextOffset = ordered.findIndex((r) => r.id === last.id) + 1;
           packet.continuation = cursor([
             actorHash,
             queryHash,
@@ -401,20 +526,22 @@ export function createRetrieval(store: LocalStore) {
                   detail: v.detail,
                 },
                 ranks: packet.items.map((item, index) => {
-                  const record = c.heads.get(`${item.type}:${item.id}`);
+                  const candidate = ordered.find((r) => r.id === item.id);
                   return {
                     item_id: item.id,
                     rank: offset + index + 1,
-                    lexical_score: record ? score(record) : 0,
+                    lexical_score: candidate?.score ?? 0,
                     critical: item.critical,
-                    origin: records.some((r) => r.entity_id === item.id)
-                      ? "lexical_selection"
-                      : "approved_graph_expansion",
+                    origin: candidate?.origin ?? "lexical_selection",
                   };
                 }),
                 project_id: v.project_id ?? null,
                 item_ids: packet.items.map((i) => i.id),
-                revisions: packet.items.map((i) => c.heads.get(`${i.type}:${i.id}`)?.id ?? null),
+                revisions: packet.items.map(
+                  (i) =>
+                    c.heads.get(`${i.type}:${i.id}`)?.id ??
+                    (ordered.find((r) => r.id === i.id)?.digest || null),
+                ),
                 budget: packet.budget,
                 elapsed_ms: performance.now() - started,
               },

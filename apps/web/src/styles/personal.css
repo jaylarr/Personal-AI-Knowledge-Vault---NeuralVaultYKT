@@ -1,0 +1,135 @@
+.personal-workspace {
+  --personal-gap: 20px;
+  --personal-pad: 14px;
+  container-type: inline-size;
+  min-width: 0;
+  margin-block: var(--personal-gap);
+}
+.personal-panel {
+  min-width: 0;
+  padding: var(--personal-pad);
+  border: 1px solid var(--atlas-border);
+  border-radius: 9px;
+  background: var(--atlas-surface);
+  color: var(--atlas-text);
+}
+.personal-panel h2 {
+  font-size: 24px;
+  line-height: 1.25;
+  margin: 0;
+}
+.personal-panel h3 {
+  font-size: 18px;
+  margin-block: 0 12px;
+}
+.personal-panel p,
+.personal-panel li {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.personal-panel button,
+.personal-panel input,
+.personal-panel textarea {
+  font: inherit;
+  min-height: 44px;
+  border: 1px solid var(--atlas-control-border);
+  border-radius: 5px;
+  padding: 10px 12px;
+  background: var(--atlas-control);
+  color: var(--atlas-text);
+  max-width: 100%;
+}
+.personal-panel button:hover {
+  background: var(--atlas-active-bg);
+}
+.personal-panel button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.personal-panel button:focus-visible,
+.personal-panel a:focus-visible,
+.personal-panel input:focus-visible,
+.personal-panel textarea:focus-visible {
+  outline: 2px solid var(--atlas-focus);
+  outline-offset: 3px;
+}
+.personal-panel a {
+  color: var(--atlas-accent);
+  text-decoration: underline;
+  display: inline-block;
+  padding-block: 10px;
+}
+.personal-panel label {
+  display: block;
+  margin-block: 14px 8px;
+}
+.personal-panel textarea,
+.personal-panel input {
+  display: block;
+  width: 100%;
+}
+.personal-panel textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+.personal-subject {
+  padding-block: var(--personal-gap);
+  border-bottom: 1px solid var(--atlas-border);
+}
+.personal-actions,
+.personal-links,
+.personal-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.personal-toolbar {
+  justify-content: space-between;
+}
+.personal-links {
+  margin-top: var(--personal-gap);
+}
+.personal-status,
+.personal-confirm {
+  background: var(--atlas-bg);
+  padding: var(--personal-pad);
+  border: 1px solid var(--atlas-border);
+  border-radius: 5px;
+}
+.personal-panel summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 12px;
+}
+.personal-path {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.personal-procedure {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--atlas-bg);
+  padding: var(--personal-pad);
+  max-height: 480px;
+  overflow: auto;
+}
+.personal-rows {
+  list-style: none;
+  padding: 0;
+}
+.personal-rows > li {
+  display: grid;
+  gap: 12px;
+  padding-block: var(--personal-gap);
+  border-bottom: 1px solid var(--atlas-border);
+}
+@container (min-width: 720px) {
+  .personal-rows > li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .personal-panel {
+    --personal-pad: 20px;
+  }
+}

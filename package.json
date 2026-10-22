@@ -39,7 +39,9 @@
     "owner:bind:neon": "pnpm build:shared && node --import tsx scripts/bind-owner.ts neon",
     "test:recovery": "pnpm build && node --import tsx scripts/verify-local-restore.ts",
     "test:performance": "pnpm build:shared && node --import tsx scripts/measure-local-retrieval.ts",
-    "test:security:local": "pnpm test:local"
+    "test:security:local": "pnpm test:local",
+    "test:personal": "pnpm build:shared && vitest run --config tests/vitest.unit.config.ts tests/unit/personal-memory.test.ts tests/unit/personal-sessions.test.ts tests/unit/personal-skills.test.ts tests/unit/personal-hooks.test.ts",
+    "evaluate:personal": "node --import tsx scripts/evaluate-personal-memory.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "3.1152.0",

@@ -1,3 +1,4 @@
+import { callPersonal, personalOperations, type PersonalOperation } from "./personal-client.js";
 // Same scoped workflow for agents whose current MCP tool inventory predates registration.
 import { readFile } from "node:fs/promises";
 import { localCheckpointInputSchema, localContextInputSchema } from "@atlas/contracts";
@@ -5,6 +6,25 @@ import { loadMcpConfig } from "./config.js";
 import { createWorkflow } from "./workflow.js";
 try {
   const [action, path, input] = process.argv.slice(2);
+  if (action === "personal") {
+    if (!input) throw Error("Personal JSON input path required");
+    const payload = JSON.parse(await readFile(input, "utf8")) as {
+      operation: string;
+      input: unknown;
+    };
+    if (!Object.hasOwn(personalOperations, payload.operation))
+      throw Error("Unknown personal operation");
+    process.stdout.write(
+      JSON.stringify(
+        await callPersonal(
+          loadMcpConfig(process.env),
+          payload.operation as PersonalOperation,
+          payload.input,
+        ),
+      ) + "\n",
+    );
+    process.exit(0);
+  }
   if (!path) throw Error("Absolute repository path required");
   const workflow = createWorkflow(loadMcpConfig(process.env));
   const value =

@@ -1,3 +1,5 @@
+export { suppressedOwnerKeys } from "./personal/policy.js";
+export * from "./personal/service.js";
 export * from "./transactions.js";
 export * from "./sources.js";
 export * from "./authorization.js";
@@ -22,7 +24,12 @@ import {
 import type { createLocalVault } from "../local-vault.js";
 import { createLocalStore, DomainError } from "./transactions.js";
 import { createSourceService, evidenceStale } from "./sources.js";
-import { createAuthorization, canReadRecord, type InstalledAgent } from "./authorization.js";
+import {
+  createAuthorization,
+  canReadRecord,
+  canReadKnowledge,
+  type InstalledAgent,
+} from "./authorization.js";
 import { createCollaboration } from "./tasks.js";
 import { createRetrieval } from "./retrieval.js";
 import { createRunner, workerChunks } from "./runner.js";
@@ -79,14 +86,12 @@ export function createDomainService(
   }
   async function changes(actor: LocalActor) {
     const c = await store.catalog();
-    return c.records
+    const events = c.records
       .filter(
         (r) =>
           ["source", "memory", "entity", "relationship"].includes(r.kind) &&
           canReadRecord(c, actor, c.heads.get(`${r.kind}:${r.entity_id}`)?.data ?? {}),
       )
-      .sort((a, b) => b.created_at.localeCompare(a.created_at))
-      .slice(0, 100)
       .map((r) => ({
         id: r.id,
         item_id: r.entity_id,
@@ -96,6 +101,18 @@ export function createDomainService(
         at: r.created_at,
         revision: r.revision,
       }));
+    const notes = (await store.vault.snapshot()).notes
+      .filter((n) => n.created_at !== null && canReadKnowledge(c, actor, n))
+      .map((n) => ({
+        id: `vault:${n.id}:${n.file_digest ?? "0"}`,
+        item_id: n.id,
+        kind: n.knowledge ? `knowledge (${n.knowledge.type})` : n.kind,
+        title: n.title,
+        actor: { kind: n.agent_id ? "agent" : "owner", id: n.agent_id ?? "local-file" },
+        at: n.created_at ?? "",
+        revision: 1,
+      }));
+    return [...events, ...notes].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 100);
   }
   const organization = createLocalOrganization(store);
   return {
@@ -116,3 +133,6 @@ export function createDomainService(
     },
   };
 }
+
+export type { CoverageEvent, CoverageData } from "./personal/coverage.js";
+export type { SessionRead, OwnerInput } from "./personal/sessions.js";

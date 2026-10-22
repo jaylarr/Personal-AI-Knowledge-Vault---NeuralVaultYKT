@@ -6,47 +6,62 @@ import {
   localContextInputSchema,
   localContextSchema,
   type LocalContextInput,
+  type PersonalHost,
 } from "@atlas/contracts";
 import { createLocalVault, LocalVaultError } from "@atlas/core/local-vault";
-import { createDomainService, DomainError, domainGraph } from "@atlas/core/local-domain";
+import {
+  createDomainService,
+  createPersonalService,
+  DomainError,
+  domainGraph,
+  suppressedOwnerKeys,
+} from "@atlas/core/local-domain";
 import { ownerDomainRoutes, agentDomainRoutes } from "./local-domain.js";
+import { ownerPersonalRoutes, agentPersonalRoutes } from "./local-personal.js";
 import type { ApiEnv } from "./app.js";
 export function createLocalServices(
   root: string,
-  options: { token?: string; agentId: string; expiresAt?: string },
+  options: { token?: string; agentId: string; expiresAt?: string; personalHosts?: PersonalHost[] },
 ) {
   const vault = createLocalVault(root, options.agentId),
     cookie = randomBytes(32).toString("base64url");
   const hash = (s: string) => createHash("sha256").update(s).digest();
-  const valid = (value: string | undefined) =>
-    Boolean(
-      options.token &&
-        value &&
-        /^atlas_[A-Za-z0-9_-]{43}$/.test(value) &&
-        timingSafeEqual(hash(value), hash(options.token)) &&
-        (!options.expiresAt || Date.parse(options.expiresAt) > Date.now()),
-    );
   const domain = createDomainService(vault, {
     id: options.agentId,
     ...(options.token ? { token: options.token } : {}),
     ...(options.expiresAt ? { expires_at: options.expiresAt } : {}),
   });
+  const personal = createPersonalService({ vault, domain, hosts: options.personalHosts ?? [] });
+  const closeDomain = domain.close.bind(domain);
+  domain.close = () => {
+    personal.close();
+    closeDomain();
+  };
   const currentValid = async (value: string | undefined) => {
-    if (!valid(value)) return false;
+    if (!value || !/^atlas_[A-Za-z0-9_-]{43}$/.test(value)) return false;
+    if (options.token && timingSafeEqual(hash(value), hash(options.token))) {
+      if (options.expiresAt && Date.parse(options.expiresAt) <= Date.now()) return false;
+    }
     try {
       const actor = await domain.auth.authenticate(value),
         catalog = await domain.store.catalog();
       const record = catalog.heads.get(`agent:${actor.id}`);
       return (
-        record?.data.compatibility === true &&
-        Array.isArray(record.data.capabilities) &&
+        Array.isArray(record?.data.capabilities) &&
         record.data.capabilities.includes("capture_project_knowledge")
       );
     } catch {
       return false;
     }
   };
-  return { vault, cookie, valid: currentValid, domain, agentReady: Boolean(options.token) };
+  return {
+    vault,
+    cookie,
+    valid: currentValid,
+    domain,
+    personal,
+    agentReady: Boolean(options.token),
+  };
 }
 export type LocalServices = ReturnType<typeof createLocalServices>;
 export function localRoutes(local: LocalServices) {
@@ -66,6 +81,11 @@ export function localRoutes(local: LocalServices) {
     });
   });
   app.get("/api/v1/runtime", (c) => c.json({ mode: "local", vault_root: local.vault.root }));
+  app.route("/api/v1/local/personal", ownerPersonalRoutes(local.personal, local.cookie));
+  app.route(
+    "/api/v1/agent/personal",
+    agentPersonalRoutes(local.personal, local.domain.auth.authenticate),
+  );
   app.use("/api/v1/local/*", async (c, next) => {
     const authenticated =
       c.req
@@ -88,17 +108,39 @@ export function localRoutes(local: LocalServices) {
   });
   app.get("/api/v1/local/vault", async (c) => {
     const data = await local.vault.snapshot();
-    if (c.req.header("Authorization")) return c.json(data);
+    if (c.req.header("Authorization")) {
+      const notes = data.notes.filter((n) => !n.personal_kind && !n.personal_only);
+      const allowed = new Set(notes.map((n) => n.id));
+      return c.json({
+        ...data,
+        notes,
+        edges: data.edges.filter((e) => allowed.has(e.source) && allowed.has(e.target)),
+      });
+    }
     const catalog = await local.domain.store.catalog(),
       graph = domainGraph(catalog, data, {
         limit: c.req.query("limit")
           ? z.coerce.number().int().min(1).max(1000).parse(c.req.query("limit"))
           : 500,
-        ...(c.req.query("focus") ? { focus: z.uuid().parse(c.req.query("focus")) } : {}),
+        ...(c.req.query("focus")
+          ? {
+              focus: z
+                .string()
+                .min(1)
+                .max(128)
+                .regex(/^[A-Za-z0-9._:-]+$/)
+                .parse(c.req.query("focus")),
+            }
+          : {}),
         include_proposed: c.req.query("proposals") === "1",
         depth: z.union([z.literal(1), z.literal(2)]).parse(Number(c.req.query("depth") ?? 1)),
       });
-    const notes = data.notes.map((n) => {
+    const excluded = suppressedOwnerKeys(catalog);
+    const notes = data.notes.map((original) => {
+      const n =
+        original.knowledge?.scope === "owner" && excluded.has(original.knowledge.key)
+          ? { ...original, personal_suppressed: true }
+          : original;
       const r = catalog.heads.get(`project_metadata:${n.id}`);
       return r
         ? { ...n, title: String(r.data.name ?? n.title), archived: r.data.archived === true }
@@ -190,7 +232,11 @@ export function localRoutes(local: LocalServices) {
     const input = localContextInputSchema.parse(await c.req.json());
     return c.json(
       await supplement(
-        await local.vault.context(c.req.param("id"), input),
+        await local.vault.context(
+          c.req.param("id"),
+          input,
+          suppressedOwnerKeys(await local.domain.store.catalog()),
+        ),
         input,
         c.req.header("Authorization")?.replace(/^Bearer /, ""),
       ),

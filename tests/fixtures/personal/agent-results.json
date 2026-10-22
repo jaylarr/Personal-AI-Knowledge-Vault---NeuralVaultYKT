@@ -1,0 +1,155 @@
+{
+  "basis": "connected_agent_review",
+  "cases": [
+    {
+      "id": "explicit-plan",
+      "outcome": "owner",
+      "reason": "An explicit broadly applicable workflow preference with a substantial-feature condition."
+    },
+    {
+      "id": "explicit-brief",
+      "outcome": "owner",
+      "reason": "Explicit communication preference applicable to routine updates."
+    },
+    {
+      "id": "explicit-path",
+      "outcome": "owner",
+      "reason": "Explicit identifier-display preference for local projects."
+    },
+    {
+      "id": "explicit-copy",
+      "outcome": "owner",
+      "reason": "Explicit preservation preference with a rewrite exception."
+    },
+    {
+      "id": "explicit-proof",
+      "outcome": "owner",
+      "reason": "Explicit evidence standard across the owner workflow."
+    },
+    {
+      "id": "explicit-mobile",
+      "outcome": "owner",
+      "reason": "Explicit interface verification preference with an applicability condition."
+    },
+    {
+      "id": "explicit-research",
+      "outcome": "owner",
+      "reason": "Explicit sourcing preference for research material claims."
+    },
+    {
+      "id": "explicit-motion",
+      "outcome": "owner",
+      "reason": "Explicit interaction accessibility preference for important controls."
+    },
+    {
+      "id": "project-1",
+      "outcome": "project",
+      "reason": "The input explicitly limits its database choice to this project."
+    },
+    {
+      "id": "project-2",
+      "outcome": "project",
+      "reason": "The claim concerns one homepage, not all owner work."
+    },
+    {
+      "id": "project-3",
+      "outcome": "project",
+      "reason": "A fixture-specific storage fact remains project scoped."
+    },
+    {
+      "id": "project-4",
+      "outcome": "project",
+      "reason": "A single client palette does not define a universal preference."
+    },
+    {
+      "id": "project-5",
+      "outcome": "project",
+      "reason": "The repository boundary is explicit in the command convention."
+    },
+    {
+      "id": "project-6",
+      "outcome": "project",
+      "reason": "One landing-page mobile requirement stays within its project."
+    },
+    {
+      "id": "routine-1",
+      "outcome": "no_value",
+      "reason": "A one-off padding change adds no durable subject by itself."
+    },
+    {
+      "id": "routine-2",
+      "outcome": "no_value",
+      "reason": "A success acknowledgment does not establish a personal preference."
+    },
+    {
+      "id": "routine-3",
+      "outcome": "no_value",
+      "reason": "Opening a file is a transient task request."
+    },
+    {
+      "id": "routine-4",
+      "outcome": "no_value",
+      "reason": "An isolated variable rename has no future reusable decision."
+    },
+    {
+      "id": "routine-5",
+      "outcome": "no_value",
+      "reason": "A current-time query provides no durable learning."
+    },
+    {
+      "id": "routine-6",
+      "outcome": "no_value",
+      "reason": "Completion status belongs to work history, not personal knowledge."
+    },
+    {
+      "id": "uncertain-1",
+      "outcome": "candidate",
+      "reason": "Assistant-origin personality guesses cannot become active owner facts."
+    },
+    {
+      "id": "uncertain-2",
+      "outcome": "candidate",
+      "reason": "Third-party quoted material is not a statement of owner preference."
+    },
+    {
+      "id": "uncertain-3",
+      "outcome": "candidate",
+      "reason": "Repeated project choices do not prove universal human intent."
+    },
+    {
+      "id": "uncertain-4",
+      "outcome": "candidate",
+      "reason": "A historical agent report needs source verification before owner promotion."
+    },
+    {
+      "id": "update-1",
+      "outcome": "replace",
+      "reason": "This explicitly narrows the prior plan-first preference by task size."
+    },
+    {
+      "id": "update-2",
+      "outcome": "replace",
+      "reason": "This explicitly changes the old update-length preference."
+    },
+    {
+      "id": "update-3",
+      "outcome": "replace",
+      "reason": "This clarifies the exception on an existing preservation subject."
+    },
+    {
+      "id": "private-1",
+      "outcome": "excluded",
+      "reason": "An explicit retention prohibition wins over automatic learning."
+    },
+    {
+      "id": "private-2",
+      "outcome": "excluded",
+      "reason": "Read-only instructions prohibit even routine local capture writes."
+    },
+    {
+      "id": "private-3",
+      "outcome": "excluded",
+      "reason": "Credentials and a retention prohibition exclude this material."
+    }
+  ]
+}

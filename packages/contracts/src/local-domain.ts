@@ -140,6 +140,9 @@ export const localOperationSchema = z.enum([
   "propose",
   "process_knowledge",
   "capture_project_knowledge",
+  "read_personal_memory",
+  "capture_personal_memory",
+  "review_personal_sessions",
 ]);
 export type LocalCapability = z.infer<typeof localOperationSchema>;
 export const localAgentSchema = z
@@ -280,6 +283,8 @@ export const localRecordKindSchema = z.enum([
   "settings",
   "trace",
   "upload_receipt",
+  "personal_candidate",
+  "skill_ref",
 ]);
 export type LocalRecordKind = z.infer<typeof localRecordKindSchema>;
 export const localRecordSchema = z

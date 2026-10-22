@@ -109,7 +109,7 @@ it("restores portable Markdown/originals/history and retrieves via a fresh API a
     });
     client = new Client({ name: "controlled-recovery", version: "1.0.0" });
     await client.connect(transport);
-    expect((await client.listTools()).tools).toHaveLength(18);
+    expect((await client.listTools()).tools).toHaveLength(25);
     const result = await client.callTool({
       name: "get_memory",
       arguments: { memory_id: memory.entity_id, token_budget: 8192 },

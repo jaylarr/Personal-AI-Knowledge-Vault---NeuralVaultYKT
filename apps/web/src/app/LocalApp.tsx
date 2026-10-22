@@ -18,6 +18,9 @@ const KnowledgeGraph = lazy(() =>
 const LocalWorkspace = lazy(() =>
   import("./local/LocalWorkspace.js").then((m) => ({ default: m.LocalWorkspace })),
 );
+const PersonalWorkspace = lazy(() =>
+  import("./personal/PersonalWorkspace.js").then((m) => ({ default: m.PersonalWorkspace })),
+);
 export function LocalApp() {
   const location = useLocation(),
     navigate = useNavigate(),
@@ -27,7 +30,14 @@ export function LocalApp() {
     [readerOpen, setReaderOpen] = useState(false),
     [graphLimit, setGraphLimit] = useState(500),
     [graphDepth, setGraphDepth] = useState<1 | 2>(1);
-  const focusId = z.uuid().safeParse(params.get("note")).success ? params.get("note") : null;
+  const focusId = z
+    .string()
+    .min(1)
+    .max(128)
+    .regex(/^[A-Za-z0-9._:-]+$/)
+    .safeParse(params.get("note")).success
+    ? params.get("note")
+    : null;
   const snapshot = useQuery({
     queryKey: ["local-vault", graphLimit, params.get("view") === "all", focusId, graphDepth],
     queryFn: async ({ signal }) => {
@@ -44,6 +54,9 @@ export function LocalApp() {
   const data = snapshot.isError ? undefined : snapshot.data,
     selected = data?.notes.find((n) => n.id === params.get("note")),
     isGraph = location.pathname === "/graph";
+  const isPersonal = ["/", "/personal", "/skills", "/coverage", "/personal/review"].includes(
+    location.pathname,
+  );
   const requestedView = params.get("view");
   const domainModes: Record<string, string> = {
     "/sources": "sources",
@@ -69,6 +82,7 @@ export function LocalApp() {
       data?.notes.filter(
         (n) =>
           !n.archived &&
+          (view === "all" || (!n.personal_kind && !n.personal_suppressed)) &&
           (view === "all" ||
             (view === "activity"
               ? !n.knowledge && !["project", "catalog"].includes(n.kind)
@@ -110,7 +124,11 @@ export function LocalApp() {
       return next;
     });
   const nav = [
-    { to: "/", label: "Workspace", icon: Layers3 },
+    { to: "/", label: "Personal context", icon: Layers3 },
+    { to: "/skills", label: "Reusable skills", icon: FileText },
+    { to: "/coverage", label: "Session coverage", icon: ShieldCheck },
+    { to: "/personal/review", label: "Unconfirmed patterns", icon: ShieldCheck },
+    { to: "/capture", label: "Capture source", icon: FileText },
     { to: "/graph", label: "Knowledge graph", icon: Network },
     { to: "/inbox", label: "Inbox", icon: FileText },
     { to: "/sources", label: "Sources", icon: FileText },
@@ -183,22 +201,24 @@ export function LocalApp() {
             <div>
               <p className="eyebrow">PERSONAL KNOWLEDGE</p>
               <h1>
-                {isGraph
-                  ? "Your knowledge graph"
-                  : domainMode
-                    ? {
-                        sources: "Your source material",
-                        inbox: "Your source Inbox",
-                        review: "Review source-backed knowledge",
-                        search: "Search local knowledge",
-                        agents: "Your local agents",
-                        organization: "Projects and collections",
-                        activity: "Your local changes",
-                        backup: "Your backup and recovery",
-                      }[domainMode]
-                    : location.pathname === "/setup"
-                      ? "Your vault folder"
-                      : "Your local knowledge vault"}
+                {isPersonal
+                  ? "Your personal working knowledge"
+                  : isGraph
+                    ? "Your knowledge graph"
+                    : domainMode
+                      ? {
+                          sources: "Your source material",
+                          inbox: "Your source Inbox",
+                          review: "Review source-backed knowledge",
+                          search: "Search local knowledge",
+                          agents: "Your local agents",
+                          organization: "Projects and collections",
+                          activity: "Your local changes",
+                          backup: "Your backup and recovery",
+                        }[domainMode]
+                      : location.pathname === "/setup"
+                        ? "Your vault folder"
+                        : "Your local knowledge vault"}
               </h1>
               <p className="intro">Your agents and this app use the same Markdown files.</p>
             </div>
@@ -213,12 +233,17 @@ export function LocalApp() {
               <LocalWorkspace mode={domainMode} />
             </Suspense>
           )}
-          {data && location.pathname === "/" && (
+          {data && isPersonal && (
+            <Suspense fallback={<p role="status">Opening personal workspace…</p>}>
+              <PersonalWorkspace />
+            </Suspense>
+          )}
+          {data && location.pathname === "/capture" && (
             <Suspense fallback={<p role="status">Preparing source capture…</p>}>
               <LocalWorkspace mode="capture" />
             </Suspense>
           )}
-          {data && !domainMode && (
+          {data && !domainMode && !isPersonal && (
             <>
               <fieldset className="knowledge-filters">
                 <legend className="sr-only">Knowledge view</legend>

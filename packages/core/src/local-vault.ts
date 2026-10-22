@@ -13,6 +13,7 @@ import {
   knowledgeMetadataSchema,
   knowledgeState,
   type LocalCheckpointInput,
+  type LocalActor,
 } from "@atlas/contracts";
 import {
   knowledgeDigest,
@@ -77,6 +78,7 @@ export function decodeNote(raw: string, path: string): Note {
           basis: metadata.knowledge_basis,
           source_statement: metadata.knowledge_source_statement,
           source_note_ids: metadata.knowledge_source_note_ids,
+          source_refs: array(metadata.knowledge_source_refs).map((value) => JSON.parse(value)),
           state: metadata.knowledge_state,
           supersedes: metadata.supersedes,
         })
@@ -89,6 +91,13 @@ export function decodeNote(raw: string, path: string): Note {
     kind: known.includes(type) ? type : "note",
     path,
     markdown,
+    ...(metadata.personal_capture === true ? { personal_only: true } : {}),
+    ...(metadata.personal_kind ? { personal_kind: metadata.personal_kind } : {}),
+    ...(path.startsWith("Owner/SkillSources/") ? { personal_kind: "skill" as const } : {}),
+    ...(metadata.record_kind === "personal_candidate"
+      ? { personal_kind: "candidate" as const }
+      : {}),
+    ...(metadata.record_kind === "skill_ref" ? { personal_kind: "skill" as const } : {}),
     project_id: knowledge?.scope === "owner" ? null : (txt(metadata.project_id) ?? null),
     agent_id: txt(metadata.agent_id) ?? null,
     created_at: txt(metadata.created_at) ?? null,
@@ -194,6 +203,23 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
   }
   async function safe(path: string, parents = false) {
     validateRelative(path);
+    const absolute = join(root, ...path.split("/")),
+      parent = posix.dirname(path),
+      parentAbsolute = parent === "." ? root : join(root, ...parent.split("/"));
+    try {
+      // Existing parents need one complete canonical resolution rather than
+      // repeated ancestor walks. The leaf is still checked separately.
+      if (resolve(await realpath(parentAbsolute)) !== parentAbsolute)
+        throw new LocalVaultError("INVALID_INPUT");
+      try {
+        if ((await lstat(absolute)).isSymbolicLink()) throw new LocalVaultError("INVALID_INPUT");
+      } catch (error) {
+        if (!notFound(error)) throw error;
+      }
+      return absolute;
+    } catch (error) {
+      if (!notFound(error) || !parents) throw error;
+    }
     if ((await lstat(root)).isSymbolicLink() || resolve(await realpath(root)) !== root)
       throw new LocalVaultError("INVALID_INPUT");
     let current = root;
@@ -239,6 +265,13 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
     }
   }
   async function createOnce(path: string, content: string) {
+    try {
+      const existing = await safe(path);
+      await lstat(existing);
+      return;
+    } catch (e) {
+      if (!notFound(e)) throw e;
+    }
     try {
       await write(path, content);
     } catch (e) {
@@ -428,7 +461,11 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
   function project(n: Note) {
     return { id: n.id, name: n.title, slug: slug(n.title), path: n.path };
   }
-  async function context(projectId: string, input: unknown) {
+  async function context(
+    projectId: string,
+    input: unknown,
+    excludedOwnerKeys: ReadonlySet<string> = new Set(),
+  ) {
     const value = localContextInputSchema.parse(input),
       data = await snapshot(),
       p = data.notes.find((n) => n.id === projectId && n.kind === "project" && !n.archived);
@@ -436,7 +473,7 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
     let notes: Note[] = [],
       truncated = data.truncated;
     if (value.context_mode === "knowledge") {
-      const selected = selectKnowledgeContext(data.notes, projectId, value);
+      const selected = selectKnowledgeContext(data.notes, projectId, value, excludedOwnerKeys);
       notes = selected.notes;
       truncated ||= selected.truncated;
     } else {
@@ -561,7 +598,13 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
       return existing;
     });
   }
-  async function captureKnowledge(projectId: string, v: LocalCheckpointInput) {
+  async function captureKnowledge(
+    projectId: string | null,
+    v: LocalCheckpointInput,
+    actor?: LocalActor,
+    confirmationId?: string,
+    originProjectId?: string,
+  ) {
     const k = v.knowledge;
     if (!k) throw new LocalVaultError("INVALID_INPUT");
     if (
@@ -571,7 +614,13 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
     )
       throw new LocalVaultError("INVALID_INPUT");
     const { request_key: requestKey, ...payload } = v;
-    const hash = digest(JSON.stringify(payload)),
+    const hash = digest(
+        JSON.stringify({
+          ...payload,
+          ...(confirmationId ? { confirmationId } : {}),
+          ...(originProjectId ? { originProjectId } : {}),
+        }),
+      ),
       semantic = knowledgeDigest(k, v.markdown);
     return locked(async () => {
       const data = await snapshot(),
@@ -583,8 +632,9 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
         )
       )
         throw new LocalVaultError("CONFLICT");
-      if (!p) throw new LocalVaultError("NOT_FOUND");
-      const receiptPath = `.atlas/requests/${digest(`${projectId}:${agentId}:${requestKey}`)}.json`;
+      if (projectId && !p) throw new LocalVaultError("NOT_FOUND");
+      if (!projectId && k.scope !== "owner") throw new LocalVaultError("INVALID_INPUT");
+      const receiptPath = `.atlas/requests/${digest(actor ? `owner:${actor.kind}:${actor.id}:${requestKey}` : `${projectId}:${agentId}:${requestKey}`)}.json`;
       try {
         const receipt = z
           .object({ hash: z.string(), note_id: z.string() })
@@ -643,13 +693,13 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
               title: "Owner context",
               created_at: new Date().toISOString(),
               agent_id: agentId,
-              status: "agent_recorded",
+              status: actor?.kind === "owner" ? "local_file" : "agent_recorded",
             },
             "# Owner context\n\nExplicit owner preferences and constraints are linked here from their individual knowledge files. They remain dated evidence; current instructions take precedence.",
           ),
         );
       const id = randomUUID(),
-        base = k.scope === "owner" ? "Owner" : posix.dirname(p.path),
+        base = k.scope === "owner" ? "Owner" : posix.dirname(p!.path),
         path = `${base}/Knowledge/${slug(k.key)}-${id.slice(0, 8)}.md`;
       const links = [
         ...sources
@@ -665,10 +715,16 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
           atlas_type: v.kind,
           title: v.title,
           ...(k.scope === "project"
-            ? { project_id: projectId, project: `[[${p.path.replace(/\.md$/, "")}]]` }
+            ? { project_id: projectId, project: `[[${p!.path.replace(/\.md$/, "")}]]` }
             : {}),
-          origin_project_id: projectId,
-          agent_id: agentId,
+          ...(actor ? { personal_capture: true } : {}),
+          ...((originProjectId ?? projectId)
+            ? { origin_project_id: originProjectId ?? projectId }
+            : {}),
+          ...(actor?.kind === "owner"
+            ? { created_by_owner_id: actor.id }
+            : { agent_id: actor?.id ?? agentId }),
+          ...(confirmationId ? { knowledge_owner_confirmation_id: confirmationId } : {}),
           created_at: new Date().toISOString(),
           status: "agent_recorded",
           knowledge_type: k.type,
@@ -683,6 +739,9 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
           knowledge_state: state,
           ...(k.source_statement ? { knowledge_source_statement: k.source_statement } : {}),
           knowledge_source_note_ids: k.source_note_ids,
+          ...(k.source_refs.length
+            ? { knowledge_source_refs: k.source_refs.map((ref) => JSON.stringify(ref)) }
+            : {}),
           supersedes: prior ? [prior.id] : [],
           links,
           provenance_paths: v.provenance.paths,
@@ -707,6 +766,17 @@ export function createLocalVault(directory: string, agentId = "local-agent") {
     ensure,
     context,
     capture,
+    captureOwner(
+      input: LocalCheckpointInput,
+      actor: LocalActor,
+      confirmationId?: string,
+      originProjectId?: string,
+    ) {
+      const v = localCheckpointInputSchema.parse(input);
+      if (actor.kind === "worker" || v.knowledge?.scope !== "owner")
+        throw new LocalVaultError("INVALID_INPUT");
+      return captureKnowledge(null, v, actor, confirmationId, originProjectId);
+    },
     writeExclusive: write,
     withLock: locked,
     safePath: safe,

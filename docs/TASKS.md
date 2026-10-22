@@ -1,5 +1,13 @@
 # Tasks
 
+## P02 — Personal working memory implementation — 2026-10-22
+
+Completed locally. S00–S15 passed the final checks: 187 unit, 31 local, 3 MCP, 19 owner/personal browser and 21 graph/local-browser cases; types/lint/format/build/bundle and synthetic quality/performance gates pass. All 52 original Vault Markdown hashes, brief and lockfile preserved. G01–G04 remain pending; no actual Codex activation, historical import or extra-host connection. Report: PERSONAL_MEMORY_IMPLEMENTATION_REPORT.md. Execution evidence: .artifacts/personal-memory-execution-2026-10-22/verification.json.
+
+## P01 — Personal memory and Codex session coverage research — 2026-10-21
+
+Completed (research only). Sourced comparison of six systems plus LongMemEval and current local coverage audit saved in PERSONAL_MEMORY_RESEARCH_2026-10-21.md. Snapshot: 111 session files, 33 main chats/78 subagent records; 23 of 24 main chats since October 17 contain an ATLAS attempt indicator, which is not proof of completed review. Initial owner knowledge had four ATLAS-focused concepts. One explicit owner preference refinement saved as an immutable replacement and retrieved separately. Audit syntax/JSON checks pass; all 50 baseline visible Markdown files and source-brief hash preserved. Evidence: .artifacts/personal-memory-research-2026-10-21/validation.json. No capture rollout, bulk import, client/hook configuration or cloud writes.
+
 ## Local completion execution — 2026-10-18
 
 R01 Completed:230 baseline entries,51 original Vault Markdown files and source brief unchanged. R02/R18:19 graph functional cases and2 isolated DPR1/DPR2 profiles passed; actual narrow-pane source controls, preserved reader and rendered WebGL graph were inspected, including expanded selection/provenance/Open file. R03–R21 implementation is connected with163 unit cases,23 local/security cases,2 real MCP/process cases and13 owner UI cases. The affected2 owner flows and17 domain cases passed again after final corrections. R15/R16 measured100/1000/5000 sources with50/50 matched and ranked first, warm p95 454/619/422ms; source5001 was rejected atomically. Earlier contended/read-notification/periodic-scan failures are retained in artifacts/report. The installed18-tool protected-launcher round trip, real77-file private local backup and isolated restore passed. X01 bounded PDF/historical chunk compatibility and X02 inert selected-input capabilities are implemented; external-operation children remain separate scopes. Actual fresh-chat domain processing/owner review/new-chat retrieval is unobserved. R22/R23 personal release acceptance is not complete. See LOCAL_RELEASE_CHECKLIST.md.
@@ -96,3 +104,18 @@ P1: extended import/integration features remain deferred until P0, including n8n
 
 
 - G04 In Progress — S01–S05 implemented;136 unit cases and strict/build checks pass. Browser regressions added/typechecked; S06–S07 visual/performance acceptance pending because browser control is disabled. See GRAPH_THEME_SPREAD_REPORT.md.
+
+## Core flaw remediation — 2026-10-20
+
+F01–F06 Completed locally. Specification: plans/2026-10-20-core-flaws-remediation-plan.md. Evidence: CORE_FLAWS_REMEDIATION_REPORT.md and .artifacts/core-flaws-2026-10-20/.
+
+| Task | Status | Evidence |
+| --- | --- | --- |
+| F01 | Completed | No temporary opens or changed history mtimes on unchanged snapshots; direct edits retain two observed versions |
+| F02 | Completed | More than 64 MiB of trace bodies remain readable and permit source writes before/after cold reload; small-catalog cache and direct-edit/independent-commit checks pass |
+| F03 | Completed | Replacement submission completion, rejected-only captured state/Markdown, preserved terminal jobs/submitted tasks and versioned chunks verified |
+| F04 | Completed | Durable knowledge search/activity, owner history, scoped agent reads, memory-only exclusion, trace origins/digests and managed capture credential revocation verified |
+| F05 | Completed | Supported conversation file control visually checked; safe imported/file focus IDs return HTTP200; unsafe IDs rejected |
+| F06 | Completed | Final 171 unit /29 local /2 MCP /14 domain-browser /21 local-browser; strict types/lint/format/build/bundle pass; all 51 originals and brief hash preserved |
+
+The 23 local-domain cases overlap the unit suite; totals are per command. Initial failures and adaptive-quality performance differences are retained; no assertion or timeout threshold was weakened. Existing owner listener/client was not restarted; actual fresh-chat/personal-release gates remain separate.

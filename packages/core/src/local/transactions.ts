@@ -112,6 +112,8 @@ export function createLocalStore(vault: ReturnType<typeof createLocalVault>) {
         const path = name.toString().replaceAll("\\", "/");
         if (
           path.startsWith(".atlas/derived/") ||
+          path.startsWith(".atlas/personal/") ||
+          path === ".atlas/personal" ||
           path === ".atlas/derived" ||
           path === ".atlas/write.lock" ||
           path.endsWith(".tmp") ||
@@ -133,10 +135,13 @@ export function createLocalStore(vault: ReturnType<typeof createLocalVault>) {
     }
   }
   async function rememberPublished(writes: BlobWrite[]) {
+    for (const w of writes) published.set(w.path, sha256(w.bytes));
+    await rememberDirectories(writes.map((w) => w.path));
+  }
+  async function rememberDirectories(paths: string[]) {
     const parents = new Set<string>();
-    for (const w of writes) {
-      published.set(w.path, sha256(w.bytes));
-      const parts = w.path.split("/");
+    for (const path of paths) {
+      const parts = path.split("/");
       for (let i = 1; i < parts.length; i++) parents.add(parts.slice(0, i).join("/"));
     }
     await eachLimit([...parents], 24, async (path) => {
@@ -287,6 +292,7 @@ export function createLocalStore(vault: ReturnType<typeof createLocalVault>) {
     });
     return { manifests, warnings, pending };
   }
+  const isTraceOutput = (path: string) => path.startsWith(".atlas/operations/trace/");
   async function catalogUnlocked(): Promise<Catalog> {
     const cached = await cachedCatalog();
     if (cached) return cached;
@@ -304,14 +310,14 @@ export function createLocalStore(vault: ReturnType<typeof createLocalVault>) {
     // such a file is harmless only after its bytes match that exact digest.
     for (const { out } of managed) published.set(out.path, out.sha256);
     await eachLimit(managed, 48, async ({ m, out }) => {
-      if (++files > 50000) {
+      if (!isTraceOutput(out.path) && ++files > 50000) {
         warnings.push("Managed file count limit reached");
         return;
       }
       if (!out.record) return;
       try {
         const buffer = await cachedRead(out.path);
-        bytes += buffer.length;
+        if (!isTraceOutput(out.path)) bytes += buffer.length;
         if (bytes > 67108864) throw new DomainError("CATALOG_LIMIT");
         const raw = buffer.toString("utf8");
         const contentHash = sha256(buffer);
@@ -388,14 +394,21 @@ export function createLocalStore(vault: ReturnType<typeof createLocalVault>) {
     }
     if (
       [...heads.values()].filter((r) =>
-        ["source", "memory", "entity", "relationship"].includes(r.kind),
+        ["source", "memory", "entity", "relationship", "personal_candidate", "skill_ref"].includes(
+          r.kind,
+        ),
       ).length > 5000
     )
       warnings.push("Logical item limit reached");
     const result = { records, heads, warnings, incomplete: warnings.length > 0 };
     scans.set(result, scan);
     counts.set(result, { recordBytes: bytes, outputs: files });
-    if (records.length >= 200) watchChanges();
+    await rememberDirectories([
+      ".atlas/write.lock",
+      ...managed.map(({ out }) => out.path),
+      ...scan.manifests.map((m) => `.atlas/transactions/${m.id}/COMMITTED.json`),
+    ]);
+    watchChanges();
     if (!result.incomplete)
       materialized = { catalog: result, stamp: await stamp(), checkedAt: Date.now() };
     statistics.last_catalog_ms = performance.now() - rebuildStarted;
@@ -424,6 +437,8 @@ export function createLocalStore(vault: ReturnType<typeof createLocalVault>) {
     return matches[0];
   }
   async function recordPath(m: Mutation, id: string) {
+    if (m.kind === "personal_candidate" || m.kind === "skill_ref")
+      return `Owner/${m.kind === "personal_candidate" ? "Candidates" : "Skills"}/${m.entity_id}/${id}.md`;
     const base = await basePath(m.project_id);
     if (m.kind === "source")
       return m.expected_revision === 0
@@ -614,12 +629,13 @@ export function createLocalStore(vault: ReturnType<typeof createLocalVault>) {
       });
       const raw = canonical(m),
         base = `.atlas/transactions/${id}`;
+      const nonTraceOutputs = outputs.filter((o) => !isTraceOutput(o.path));
       const oldCounts = counts.get(c) ?? { recordBytes: 0, outputs: 0 },
         nextCounts = {
           recordBytes:
             oldCounts.recordBytes +
-            outputs.filter((o) => o.record).reduce((sum, o) => sum + o.bytes, 0),
-          outputs: oldCounts.outputs + outputs.length,
+            nonTraceOutputs.filter((o) => o.record).reduce((sum, o) => sum + o.bytes, 0),
+          outputs: oldCounts.outputs + nonTraceOutputs.length,
         };
       if (nextCounts.recordBytes > 67108864 || nextCounts.outputs > 50000)
         throw new DomainError("CATALOG_ADMISSION_LIMIT", 413);
@@ -628,7 +644,14 @@ export function createLocalStore(vault: ReturnType<typeof createLocalVault>) {
         updatedHeads.set(recordKey(record.kind, record.entity_id), record);
       if (
         [...updatedHeads.values()].filter((r) =>
-          ["source", "memory", "entity", "relationship"].includes(r.kind),
+          [
+            "source",
+            "memory",
+            "entity",
+            "relationship",
+            "personal_candidate",
+            "skill_ref",
+          ].includes(r.kind),
         ).length > 5000
       )
         throw new DomainError("LOGICAL_ITEM_LIMIT", 413);

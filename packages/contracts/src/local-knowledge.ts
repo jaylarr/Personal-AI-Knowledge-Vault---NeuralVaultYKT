@@ -2,6 +2,20 @@ import { z } from "zod";
 import { checkpointInputSchema, contextInputSchema } from "./agent-workflow.js";
 
 const sha = z.string().regex(/^[a-f0-9]{64}$/);
+export const personalSourceRefSchema = z
+  .object({
+    host_id: z.string().regex(/^[a-z][a-z0-9-]{2,47}$/),
+    session_key: sha,
+    session_revision: sha,
+    message_id: z.string().min(1).max(128),
+    turn_id: z.string().min(1).max(128).nullable(),
+    start_codepoint: z.number().int().nonnegative(),
+    end_codepoint: z.number().int().positive(),
+    quote_sha256: sha,
+  })
+  .strict()
+  .refine((v) => v.end_codepoint > v.start_codepoint);
+export type PersonalSourceRef = z.infer<typeof personalSourceRefSchema>;
 export const knowledgeFieldsSchema = z
   .object({
     type: z.enum(["preference", "constraint", "decision", "lesson", "project_fact"]),
@@ -22,6 +36,7 @@ export const knowledgeFieldsSchema = z
     basis: z.enum(["owner_explicit", "verified_observation", "historical_report", "inference"]),
     source_statement: z.string().trim().min(1).max(600).optional(),
     source_note_ids: z.array(z.uuid()).max(8).default([]),
+    source_refs: z.array(personalSourceRefSchema).max(12).default([]),
   })
   .strict();
 export type KnowledgeFields = z.infer<typeof knowledgeFieldsSchema>;

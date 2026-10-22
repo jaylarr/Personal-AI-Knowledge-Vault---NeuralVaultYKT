@@ -48,6 +48,38 @@ const claimKinds = z.enum([
 ]);
 const ev = z.array(localEvidenceSchema).min(1).max(20);
 const organizationSchema = localOrganizationSchema;
+function hasAcceptedOutcome(c: Catalog, sourceId: string, mutations: Mutation[]) {
+  const currentSource =
+    mutations.find((m) => m.kind === "source" && m.entity_id === sourceId)?.data ??
+    c.heads.get(`source:${sourceId}`)?.data;
+  if (
+    (Array.isArray(currentSource?.collection_ids) && currentSource.collection_ids.length > 0) ||
+    (Array.isArray(currentSource?.tags) && currentSource.tags.length > 0)
+  )
+    return true;
+  const submissions = [...c.heads.values()].filter(
+    (r) => r.kind === "submission" && r.data.source_id === sourceId,
+  );
+  if (!submissions.length) return true;
+  let totalCandidates = 0;
+  for (const sub of submissions) {
+    const refs = Array.isArray(sub.data.candidate_refs)
+      ? (sub.data.candidate_refs as {
+          kind: "memory" | "entity" | "relationship" | "review";
+          id: string;
+        }[])
+      : [];
+    totalCandidates += refs.length;
+    for (const ref of refs) {
+      const mutation = mutations.find((m) => m.kind === ref.kind && m.entity_id === ref.id);
+      const status = String(
+        mutation?.data.status ?? c.heads.get(`${ref.kind}:${ref.id}`)?.data.status ?? "",
+      );
+      if (["active", "approved", "superseded"].includes(status)) return true;
+    }
+  }
+  return totalCandidates === 0;
+}
 function aggregate(c: Catalog, sourceId: string, mutations: Mutation[]) {
   const tasks = new Map(
     [...c.heads.values()]
@@ -67,12 +99,18 @@ function aggregate(c: Catalog, sourceId: string, mutations: Mutation[]) {
       ? "awaiting_agent"
       : active.some((t) => t.state === "submitted")
         ? "review_pending"
-        : active.length
+        : active.length && hasAcceptedOutcome(c, sourceId, mutations)
           ? "organized"
           : "captured";
   const existing = mutations.find((m) => m.kind === "source" && m.entity_id === sourceId);
-  if (existing) existing.data = { ...existing.data, processing_state };
-  else mutations.push(sourceMutation(c, sourceId, { processing_state }));
+  if (existing) {
+    const updated = sourceMutation(c, sourceId, {
+      ...(existing.data as Partial<import("@atlas/contracts").LocalSource>),
+      processing_state,
+    });
+    existing.data = updated.data;
+    existing.body = updated.body;
+  } else mutations.push(sourceMutation(c, sourceId, { processing_state }));
 }
 function completeSubmissions(c: Catalog, changedId: string, mutations: Mutation[]) {
   for (const submission of c.heads.values())
@@ -1127,6 +1165,8 @@ export function createCollaboration(store: LocalStore) {
         project_id: typeof data.project_id === "string" ? data.project_id : null,
       });
       completeSubmissions(c, id, mutations);
+      if (v.action === "supersede" && v.replacement_id)
+        completeSubmissions(c, v.replacement_id, mutations);
       return {
         mutations,
         result: { item_id: id, status: String(data.status), review_id: reviewId },

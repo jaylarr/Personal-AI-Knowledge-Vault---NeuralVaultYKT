@@ -56,7 +56,7 @@ async function call(client: Client, name: string, args: Record<string, unknown>)
   expect(content).toHaveLength(1);
   return z.record(z.string(), z.unknown()).parse(JSON.parse(content[0]?.text ?? "null"));
 }
-it("lists eighteen schemas, preserves the three automatic tools, and completes a fresh MCP process round trip", async () => {
+it("lists twenty-five schemas, preserves the three automatic tools, and completes a fresh MCP process round trip", async () => {
   const root = await mkdtemp(join(tmpdir(), "atlas-domain-mcp-")),
     installedToken = `atlas_${randomBytes(32).toString("base64url")}`;
   let local = createLocalServices(root, { agentId: "fixture-installed", token: installedToken }),
@@ -70,8 +70,8 @@ it("lists eighteen schemas, preserves the three automatic tools, and completes a
     );
     automatic = await connect(installedToken, root);
     const tools = (await automatic.listTools()).tools;
-    expect(tools).toHaveLength(18);
-    expect(new Set(tools.map((t) => t.name)).size).toBe(18);
+    expect(tools).toHaveLength(25);
+    expect(new Set(tools.map((t) => t.name)).size).toBe(25);
     for (const tool of tools) expect(tool.inputSchema.type).toBe("object");
     const started = await call(automatic, "atlas_start_project", { repository_path: root }),
       project = z.object({ project: z.object({ id: z.string() }) }).parse(started).project;

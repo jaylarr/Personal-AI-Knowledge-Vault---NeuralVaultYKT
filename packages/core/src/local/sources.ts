@@ -435,6 +435,12 @@ export function createSourceService(
       ];
       for (const r of c.heads.values())
         if (["task", "job", "grant"].includes(r.kind) && r.data.source_version_id === old.id) {
+          if (
+            (r.kind === "grant" && r.data.revoked === true) ||
+            (r.kind === "job" && !["queued", "running"].includes(String(r.data.state))) ||
+            (r.kind === "task" && !["awaiting_agent", "claimed"].includes(String(r.data.state)))
+          )
+            continue;
           const data =
             r.kind === "grant"
               ? { ...r.data, revoked: true }

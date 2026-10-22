@@ -8,12 +8,23 @@ import { createLocalServices } from "../../apps/api/src/local-vault.js";
 import { createApp } from "../../apps/api/src/app.js";
 import { loadConfig } from "../../apps/api/src/config.js";
 import { attachStatic } from "../../apps/api/src/static.js";
+import { seedPersonal } from "./personal-browser-seed.js";
 const container = await mkdtemp(join(tmpdir(), "atlas-domain-browser-")),
   root = join(container, "Vault");
 const local = createLocalServices(root, {
   agentId: "controlled-domain-installation",
   token: `atlas_${randomBytes(32).toString("base64url")}`,
+  personalHosts: [
+    {
+      id: "browser-pc",
+      kind: "codex-local-jsonl",
+      enabled: true,
+      codex_home: join(container, "Codex"),
+      skill_roots: [join(container, "Skills")],
+    },
+  ],
 });
+await seedPersonal(local, container);
 const project = await local.vault.ensure({
   repository_digest: digest("domain-browser-project"),
   name: "Controlled source project",
